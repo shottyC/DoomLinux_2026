@@ -37,7 +37,7 @@ while [ $# -gt 0 ]; do
 	esac
 done
 
-APT_PACKAGES="wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin cpio tar xz-utils file dosfstools qemu-system-x86-headless vagrant docker.io shellcheck shfmt python3 python3-pip"
+APT_PACKAGES="wget curl make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin cpio tar xz-utils file dosfstools qemu-system-x86-headless vagrant docker.io shellcheck shfmt python3 python3-pip"
 
 if [ "$DRY_RUN" -eq 1 ]; then
 	echo "The following packages would be installed:"

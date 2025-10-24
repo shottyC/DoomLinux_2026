@@ -11,6 +11,25 @@ ROOTFS=$SOURCE_DIR/rootfs
 STAGING=$SOURCE_DIR/staging
 ISO_DIR=$SOURCE_DIR/iso
 
+download() {
+	url="$1"
+	dest="$2"
+	if [ -f "$dest" ]; then
+		echo "⚙️  Using cached $(basename "$dest")"
+		return
+	fi
+	echo "⬇️  Fetching $url -> $dest"
+	if command -v curl >/dev/null 2>&1; then
+		curl -L --retry 5 --retry-delay 5 -o "$dest" "$url"
+	else
+		wget --tries=5 --timeout=30 -O "$dest" "$url"
+	fi
+	if [ ! -f "$dest" ]; then
+		echo "Failed to download $url" >&2
+		exit 1
+	fi
+}
+
 write_trenchbroom_instructions() {
 	cat >"$ROOTFS/root/TRENCHBROOM-INSTALL.txt" <<'EOF'
 TrenchBroom is not bundled with DoomLinux.
@@ -82,10 +101,10 @@ fi
 cd "$STAGING"
 
 set -ex
-wget -nc -O kernel.tar.xz "http://kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz"
-wget -nc -O busybox.tar.bz2 "http://busybox.net/downloads/busybox-${BUSYBOX_VERSION}.tar.bz2"
-wget -nc -O fbDOOM-master.zip https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip
-wget -nc -O doom1.wad https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad
+download "https://kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz" kernel.tar.xz
+download "https://busybox.net/downloads/busybox-${BUSYBOX_VERSION}.tar.bz2" busybox.tar.bz2
+download "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip" fbDOOM-master.zip
+download "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" doom1.wad
 
 tar -xvf kernel.tar.xz
 tar -xvf busybox.tar.bz2

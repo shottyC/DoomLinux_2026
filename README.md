@@ -16,7 +16,7 @@ This command will create an iso of DoomLinux which is bootable from USB stick.
 
 ## Build Dependencies
 ```bash
-sudo apt install wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common
+sudo apt install wget curl make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common
 ```
 Alternatively, run `./scripts/install-deps.sh` (supports `--dry-run` for auditing the package list).
 
