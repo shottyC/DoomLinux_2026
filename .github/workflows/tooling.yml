@@ -1,0 +1,33 @@
+name: Developer Tooling
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  install-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry run dependency installer
+        run: ./scripts/install-deps.sh --dry-run
+
+  devcontainer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Dev Container CLI
+        run: npm install -g @devcontainers/cli
+      - name: Build Dev Container
+        run: devcontainer build --workspace-folder .
+
+  vscode-launch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Validate VSCode launch configuration
+        run: |
+          jq -e '.configurations[0].preLaunchTask == "Build ISO"' .vscode/launch.json

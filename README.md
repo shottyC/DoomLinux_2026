@@ -1,5 +1,5 @@
 
-# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
+# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
 A single script to build a minimal live Linux operating system from source code that runs Doom on boot.
 ```bash
 ./DoomLinux.sh
@@ -15,9 +15,10 @@ This command will create an iso of DoomLinux which is bootable from USB stick.
 - Creates a bootable live Linux iso that runs Doom on boot.
 
 ## Build Dependencies
-```bash 
+```bash
 sudo apt install wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common
 ```
+Alternatively, run `./scripts/install-deps.sh` (supports `--dry-run` for auditing the package list).
 
 ## Makefile Shortcuts
 Common workflows are available through the root `Makefile`.
@@ -32,6 +33,7 @@ make test-bdd         # Behavior-driven tests powered by behave
 make test-qemu        # Boots DoomLinux.iso in headless QEMU (requires qemu-system-x86)
 make test-vagrant     # Boots DoomLinux.iso via Vagrant Docker provider (requires vagrant + docker)
 make test-integration # Convenience target that runs both QEMU and Vagrant checks
+./scripts/install-deps.sh --dry-run  # Show required packages for manual installation
 ```
 
 ## Docker Builds
@@ -278,6 +280,12 @@ For boot validation, run `make test-qemu` (requires `qemu-system-x86_64`) to lau
 
 ## Linting
 Use `make lint` to run ShellCheck and shfmt. The target prefers locally installed tools and falls back to Docker images (`koalaman/shellcheck` and `mvdan/shfmt`) when they are absent.
+
+## Developer Tooling
+- **miso integration**: For richer ISO boot smoke tests, consider layering the [miso](https://github.com/ByteHackr/miso) framework atop the QEMU scripts provided here. It meshes well with the generated ISO artifacts and CI workflows.
+- **Dependency bootstrap**: Run `./scripts/install-deps.sh` to install all host packages needed for building, testing, and integration workflows.
+- **Devcontainer**: Launch VS Code’s “Dev Containers: Open Folder in Container…” command to load the repo through `.devcontainer/devcontainer.json`. The container mirrors CI (Docker-in-Docker enabled) and runs `make lint test-smoke` after creation.
+- **VSCode launch configs**: The `.vscode/launch.json` profile wraps `make test-qemu`, while `.vscode/tasks.json` exposes quick commands for building and running smoke tests. Use them to iterate without leaving VS Code.
 
 ## TrenchBroom
 TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.

@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build ISO",
+			"type": "shell",
+			"command": "make build",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run smoke tests",
+			"type": "shell",
+			"command": "make test-smoke",
+			"problemMatcher": []
+		}
+	]
+}

@@ -1,0 +1,23 @@
+{
+	"name": "DoomLinux Devcontainer",
+	"dockerFile": "Dockerfile",
+	"context": "..",
+	"runArgs": ["--privileged"],
+	"postCreateCommand": "make lint test-smoke",
+	"remoteUser": "vscode",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.makefile-tools",
+				"timonwong.shellcheck",
+				"ms-python.python"
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
+		}
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {}
+	}
+}

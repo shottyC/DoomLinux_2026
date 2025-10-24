@@ -1,0 +1,22 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run DoomLinux QEMU (ISO required)",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "/usr/bin/env",
+			"args": [
+				"bash",
+				"-lc",
+				"make test-qemu"
+			],
+			"cwd": "${workspaceFolder}",
+			"stopAtEntry": false,
+			"environment": [],
+			"externalConsole": true,
+			"preLaunchTask": "Build ISO"
+		}
+	],
+	"compounds": []
+}

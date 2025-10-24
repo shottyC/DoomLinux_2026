@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import shutil
 import subprocess
 
@@ -62,3 +63,40 @@ def step_grub_config(context):
     grub_cfg = REPO_ROOT / "iso" / "boot" / "grub" / "grub.cfg"
     assert grub_cfg.is_file()
     assert 'menuentry "DoomLinux"' in grub_cfg.read_text()
+
+
+@then("the install script exists and is executable")
+def step_install_script(context):
+    script = REPO_ROOT / "scripts" / "install-deps.sh"
+    assert script.is_file(), "install-deps.sh not found"
+    assert script.stat().st_mode & 0o111, "install-deps.sh is not executable"
+
+
+@then("the devcontainer configuration is available")
+def step_devcontainer(context):
+    devcontainer_dir = REPO_ROOT / ".devcontainer"
+    config = devcontainer_dir / "devcontainer.json"
+    dockerfile = devcontainer_dir / "Dockerfile"
+    assert config.is_file(), "devcontainer.json missing"
+    assert dockerfile.is_file(), "Devcontainer Dockerfile missing"
+    data = json.loads(config.read_text())
+    assert data.get("dockerFile") == "Dockerfile", "devcontainer should reference Dockerfile"
+    assert "postCreateCommand" in data, "devcontainer postCreateCommand missing"
+
+
+@then("the VSCode launch configuration is available")
+def step_vscode_launch(context):
+    launch = REPO_ROOT / ".vscode" / "launch.json"
+    tasks = REPO_ROOT / ".vscode" / "tasks.json"
+    assert launch.is_file(), "launch.json missing"
+    assert tasks.is_file(), "tasks.json missing"
+    launch_data = json.loads(launch.read_text())
+    configs = launch_data.get("configurations", [])
+    assert configs, "launch.json configurations missing"
+    assert configs[0].get("preLaunchTask") == "Build ISO", "preLaunchTask should be Build ISO"
+
+
+@then("the README references miso usage")
+def step_readme_miso(context):
+    readme = REPO_ROOT / "README.md"
+    assert "miso" in readme.read_text().lower(), "README should mention miso"
