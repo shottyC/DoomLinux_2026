@@ -11,6 +11,63 @@ ROOTFS=$SOURCE_DIR/rootfs
 STAGING=$SOURCE_DIR/staging
 ISO_DIR=$SOURCE_DIR/iso
 
+write_trenchbroom_instructions() {
+cat > "$ROOTFS/root/TRENCHBROOM-INSTALL.txt" <<'EOF'
+TrenchBroom is not bundled with DoomLinux.
+
+Install on a workstation with desktop support:
+  1. Download the latest TrenchBroom release from https://github.com/TrenchBroom/TrenchBroom/releases
+  2. Make the AppImage executable: chmod +x TrenchBroom-*.AppImage
+  3. Launch it: ./TrenchBroom-*.AppImage
+
+Export WAD files into this ISO by copying them into /bin/ inside the DoomLinux root filesystem before building, or mount the rootfs after boot and transfer over serial/USB.
+EOF
+}
+
+write_init_script() {
+cat > "$ROOTFS/init" <<'EOF'
+#!/bin/sh
+dmesg -n 1
+mount -t devtmpfs none /dev
+mount -t proc none /proc
+mount -t sysfs none /sys
+fbdoom -iwad /bin/doom1.wad
+clear
+setsid cttyhack /bin/sh
+EOF
+chmod +x "$ROOTFS/init"
+}
+
+write_grub_config() {
+cat > "$ISO_DIR/boot/grub/grub.cfg" <<'EOF'
+set default=0
+set timeout=30
+
+# Menu Colours
+set menu_color_normal=white/black
+set menu_color_highlight=white/green
+
+root (hd0,0)
+
+menuentry "DoomLinux" {
+    linux  /boot/bzImage
+    initrd /boot/rootfs.gz
+}
+EOF
+}
+
+if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
+    set -e
+    mkdir -p "$ROOTFS/bin" "$ROOTFS/dev" "$ROOTFS/mnt" "$ROOTFS/proc" "$ROOTFS/sys" "$ROOTFS/tmp" "$ROOTFS/root" "$ROOTFS/etc"
+    mkdir -p "$ISO_DIR/boot/grub"
+    write_trenchbroom_instructions
+    write_init_script
+    write_grub_config
+    touch "$ROOTFS/bin/fbdoom" "$ROOTFS/bin/doom1.wad" "$ISO_DIR/boot/bzImage" "$ISO_DIR/boot/rootfs.gz" "$ISO_DIR/boot/System.map"
+    printf 'placeholder iso\n' > "$SOURCE_DIR/DoomLinux.iso"
+    exit 0
+fi
+
 cd $STAGING
 
 set -ex
@@ -43,27 +100,8 @@ cp $STAGING/doom1.wad $ROOTFS/bin/doom1.wad
 cd $ROOTFS
 mkdir -p bin dev mnt proc sys tmp root etc
 
-cat > $ROOTFS/root/TRENCHBROOM-INSTALL.txt <<'EOF'
-TrenchBroom is not bundled with DoomLinux.
-
-Install on a workstation with desktop support:
-  1. Download the latest TrenchBroom release from https://github.com/TrenchBroom/TrenchBroom/releases
-  2. Make the AppImage executable: chmod +x TrenchBroom-*.AppImage
-  3. Launch it: ./TrenchBroom-*.AppImage
-
-Export WAD files into this ISO by copying them into /bin/ inside the DoomLinux root filesystem before building, or mount the rootfs after boot and transfer over serial/USB.
-EOF
-
-echo '#!/bin/sh' > init
-echo 'dmesg -n 1' >> init
-echo 'mount -t devtmpfs none /dev' >> init
-echo 'mount -t proc none /proc' >> init
-echo 'mount -t sysfs none /sys' >> init
-echo 'fbdoom -iwad /bin/doom1.wad' >> init
-echo 'clear' >> init
-echo 'setsid cttyhack /bin/sh' >> init
-
-chmod +x init
+write_trenchbroom_instructions
+write_init_script
 
 cd $ROOTFS
 find . | cpio -R root:root -H newc -o | gzip > $SOURCE_DIR/iso/boot/rootfs.gz
@@ -92,21 +130,7 @@ make INSTALL_HDR_PATH=$ROOTFS headers_install -j$(nproc)
 cd $SOURCE_DIR/iso/boot
 mkdir -p grub
 cd grub
-cat > grub.cfg << EOF
-set default=0
-set timeout=30
-
-# Menu Colours
-set menu_color_normal=white/black
-set menu_color_highlight=white/green
-
-root (hd0,0)
-
-menuentry "DoomLinux" {      
-    linux  /boot/bzImage
-    initrd /boot/rootfs.gz
-}
-EOF
+write_grub_config
 
 cd $SOURCE_DIR
 grub-mkrescue --compress=xz -o DoomLinux.iso iso 

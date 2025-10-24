@@ -26,6 +26,8 @@ make build            # Runs DoomLinux.sh natively
 make clean            # Removes build artifacts (rootfs/, staging/, iso/, DoomLinux.iso)
 make docker-run-ubuntu  # Builds and runs the Ubuntu-based container to produce DoomLinux.iso
 make docker-run-alpine  # Builds and runs the Alpine-based container to produce DoomLinux.iso
+make test-smoke       # Lightweight functional smoke test using placeholder artifacts
+make test-bdd         # Behavior-driven tests powered by behave
 ```
 
 ## Docker Builds
@@ -262,6 +264,11 @@ To run on QEMU :
 ```bash
 qemu-system-x86_64 DoomLinux.iso
 ```
+
+## Testing
+Run `make test-smoke` to execute a fast functional check. It drives `DoomLinux.sh` in smoke mode (no downloads or compilation) and verifies that core artifacts are scaffolded.
+
+Behavior-driven regression coverage lives under `tests/features/`. Install Python 3 and run `make test-bdd` (which installs `behave` locally if needed) to execute the scenarios.
 
 ## TrenchBroom
 TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.
