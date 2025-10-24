@@ -60,4 +60,6 @@ apt-get update
 set -- $APT_PACKAGES
 apt-get install -y "$@"
 
+python3 -m pip install --no-cache-dir --upgrade behave coverage >/dev/null 2>&1 || true
+
 echo "Dependencies installed successfully."

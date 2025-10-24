@@ -1,4 +1,4 @@
-.PHONY: build clean docker-build-ubuntu docker-build-alpine docker-run-ubuntu docker-run-alpine docker-shell-ubuntu docker-shell-alpine lint lint-shellcheck lint-shfmt test-smoke test-bdd test test-qemu test-vagrant test-integration
+.PHONY: build clean docker-build-ubuntu docker-build-alpine docker-run-ubuntu docker-run-alpine docker-shell-ubuntu docker-shell-alpine lint lint-shellcheck lint-shfmt lint-logs convert-logs coverage-report test-smoke test-bdd test test-qemu test-vagrant test-integration reports
 
 build:
 	./DoomLinux.sh
@@ -24,21 +24,30 @@ docker-shell-ubuntu: docker-build-ubuntu
 docker-shell-alpine: docker-build-alpine
 	docker run --rm -it -v $(CURDIR):/workspace -w /workspace doomlinux:alpine /bin/sh
 
-lint: lint-shellcheck lint-shfmt
+lint: lint-shellcheck lint-shfmt lint-logs
 
 lint-shellcheck:
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck DoomLinux.sh scripts/install-deps.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
+		shellcheck DoomLinux.sh scripts/install-deps.sh scripts/log-convert.sh scripts/log-lint.sh scripts/coverage-report.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	else \
-		docker run --rm -v $(CURDIR):/workspace -w /workspace koalaman/shellcheck:stable DoomLinux.sh scripts/install-deps.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
+		docker run --rm -v $(CURDIR):/workspace -w /workspace koalaman/shellcheck:stable DoomLinux.sh scripts/install-deps.sh scripts/log-convert.sh scripts/log-lint.sh scripts/coverage-report.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	fi
 
 lint-shfmt:
 	@if command -v shfmt >/dev/null 2>&1; then \
-		shfmt -d DoomLinux.sh scripts/install-deps.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
+		shfmt -d DoomLinux.sh scripts/install-deps.sh scripts/log-convert.sh scripts/log-lint.sh scripts/coverage-report.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	else \
-		docker run --rm -v $(CURDIR):/workspace -w /workspace mvdan/shfmt -d DoomLinux.sh scripts/install-deps.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
+		docker run --rm -v $(CURDIR):/workspace -w /workspace mvdan/shfmt -d DoomLinux.sh scripts/install-deps.sh scripts/log-convert.sh scripts/log-lint.sh scripts/coverage-report.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	fi
+
+lint-logs:
+	./scripts/log-lint.sh
+
+convert-logs:
+	./scripts/log-convert.sh
+
+coverage-report:
+	./scripts/coverage-report.sh
 
 test-smoke:
 	./tests/smoke.sh
@@ -56,3 +65,5 @@ test-vagrant:
 	VAGRANT_DEFAULT_PROVIDER=$${VAGRANT_DEFAULT_PROVIDER:-docker} tests/vagrant/test.sh
 
 test-integration: test-qemu test-vagrant
+
+reports: test-smoke convert-logs lint-logs coverage-report

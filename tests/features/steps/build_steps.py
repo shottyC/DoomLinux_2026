@@ -108,3 +108,30 @@ def step_smoke_summary(context):
     assert summary.is_file(), "Smoke summary log missing"
     content = summary.read_text()
     assert "✅" in content and "✨" in content, "Smoke summary should contain celebratory emojis"
+
+
+@when("I convert the log summaries")
+def step_convert_logs(context):
+    subprocess.run([
+        "bash",
+        "-lc",
+        "./scripts/log-convert.sh"
+    ], cwd=REPO_ROOT, check=True)
+
+
+@then("CSV and LaTeX summaries exist")
+def step_csv_tex_outputs(context):
+    base = REPO_ROOT / "tests" / "artifacts"
+    smoke_csv = base / "smoke-summary.csv"
+    smoke_tex = base / "smoke-summary.tex"
+    assert smoke_csv.is_file(), "smoke-summary.csv missing"
+    assert smoke_tex.is_file(), "smoke-summary.tex missing"
+
+
+@then("the log lint passes")
+def step_log_lint(context):
+    subprocess.run([
+        "bash",
+        "-lc",
+        "./scripts/log-lint.sh"
+    ], cwd=REPO_ROOT, check=True)

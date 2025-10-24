@@ -1,0 +1,31 @@
+name: Reports
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  reports:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: make test-smoke
+
+      - name: Convert summaries to CSV/LaTeX
+        run: ./scripts/log-convert.sh
+
+      - name: Lint log artifacts
+        run: ./scripts/log-lint.sh
+
+      - name: Generate coverage reports
+        run: ./scripts/coverage-report.sh
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-and-coverage
+          path: tests/artifacts/

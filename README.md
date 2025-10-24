@@ -1,5 +1,5 @@
 
-# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Logs](https://github.com/realagiorganization/DoomLinux/actions/workflows/logs.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
+# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Reports](https://github.com/realagiorganization/DoomLinux/actions/workflows/reports.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Logs](https://github.com/realagiorganization/DoomLinux/actions/workflows/logs.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
 A single script to build a minimal live Linux operating system from source code that runs Doom on boot.
 ```bash
 ./DoomLinux.sh
@@ -33,6 +33,10 @@ make test-bdd         # Behavior-driven tests powered by behave
 make test-qemu        # Boots DoomLinux.iso in headless QEMU (requires qemu-system-x86)
 make test-vagrant     # Boots DoomLinux.iso via Vagrant Docker provider (requires vagrant + docker)
 make test-integration # Convenience target that runs both QEMU and Vagrant checks
+make convert-logs     # Convert emoji summaries into CSV and LaTeX tables (tests/artifacts/*.csv|*.tex)
+make lint-logs        # Scan log artifacts for error markers
+make coverage-report  # Generate coverage.txt and coverage.xml with coverage.py
+make reports          # Run smoke, conversions, log lint, and coverage in a single pass
 ./scripts/install-deps.sh --dry-run  # Show required packages for manual installation
 ```
 
@@ -278,6 +282,8 @@ Behavior-driven regression coverage lives under `tests/features/`. Install Pytho
 
 For boot validation, run `make test-qemu` (requires `qemu-system-x86_64`) to launch the generated ISO headlessly and confirm kernel startup logs. Use `make test-vagrant` to run the same check inside a disposable Vagrant Docker guest—handy for reproducing matrix failures locally. Both commands expect `DoomLinux.iso` to already exist; invoke `make test-integration` to execute them back-to-back.
 
+Generate code coverage with `make coverage-report`. The helper script installs coverage.py on demand, re-runs the behave suite under instrumentation, and stores human-readable (`coverage.txt`) and machine-readable (`coverage.xml`) outputs in `tests/artifacts/` for upload.
+
 ## Linting
 Use `make lint` to run ShellCheck and shfmt. The target prefers locally installed tools and falls back to Docker images (`koalaman/shellcheck` and `mvdan/shfmt`) when they are absent.
 
@@ -287,10 +293,13 @@ Use `make lint` to run ShellCheck and shfmt. The target prefers locally installe
 - **Devcontainer**: Launch VS Code’s “Dev Containers: Open Folder in Container…” command to load the repo through `.devcontainer/devcontainer.json`. The container mirrors CI (Docker-in-Docker enabled) and runs `make lint test-smoke` after creation.
 - **VSCode launch configs**: The `.vscode/launch.json` profile wraps `make test-qemu`, while `.vscode/tasks.json` exposes quick commands for building and running smoke tests. Use them to iterate without leaving VS Code.
 - **Emoji summaries**: Smoke and QEMU checks emit emoji-enhanced tables into `tests/artifacts/*.txt`. They’re surfaced in CI logs and ready for artifact upload.
+- **CSV/LaTeX exports**: `make convert-logs` (or `./scripts/log-convert.sh`) creates `smoke-summary.csv` / `.tex` for dashboards and papers.
+- **Coverage**: `make coverage-report` (or `./scripts/coverage-report.sh`) runs behave under coverage.py, storing `coverage.txt` and `coverage.xml` in `tests/artifacts/`.
 
 ## Log Publishing
 - Developer and CI runs drop log summaries under `tests/artifacts/`; see `tests/artifacts/smoke-summary.txt` and `tests/artifacts/qemu-summary.txt`.
 - The *Logs* GitHub workflow (`logs.yml`) executes `make test-smoke`, prints each summary in the Actions log, uploads the artifact bundle, and—when `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_S3_BUCKET` secrets are present—copies the files to `s3://$AWS_S3_BUCKET/logs/${GITHUB_RUN_ID}/` via the AWS CLI.
+- The *Reports* workflow (`reports.yml`) runs smoke, conversions, and coverage, publishing CSV/LaTeX and coverage artifacts for downstream analysis.
 
 ## TrenchBroom
 TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.

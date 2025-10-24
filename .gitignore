@@ -5,3 +5,6 @@ staging/
 tests/vagrant/.vagrant/
 tests/vagrant/qemu.log
 tests/artifacts/
+.coverage
+coverage.xml
+coverage.txt
