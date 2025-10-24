@@ -1,5 +1,5 @@
 
-# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
+# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Logs](https://github.com/realagiorganization/DoomLinux/actions/workflows/logs.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
 A single script to build a minimal live Linux operating system from source code that runs Doom on boot.
 ```bash
 ./DoomLinux.sh
@@ -286,6 +286,11 @@ Use `make lint` to run ShellCheck and shfmt. The target prefers locally installe
 - **Dependency bootstrap**: Run `./scripts/install-deps.sh` to install all host packages needed for building, testing, and integration workflows.
 - **Devcontainer**: Launch VS Code’s “Dev Containers: Open Folder in Container…” command to load the repo through `.devcontainer/devcontainer.json`. The container mirrors CI (Docker-in-Docker enabled) and runs `make lint test-smoke` after creation.
 - **VSCode launch configs**: The `.vscode/launch.json` profile wraps `make test-qemu`, while `.vscode/tasks.json` exposes quick commands for building and running smoke tests. Use them to iterate without leaving VS Code.
+- **Emoji summaries**: Smoke and QEMU checks emit emoji-enhanced tables into `tests/artifacts/*.txt`. They’re surfaced in CI logs and ready for artifact upload.
+
+## Log Publishing
+- Developer and CI runs drop log summaries under `tests/artifacts/`; see `tests/artifacts/smoke-summary.txt` and `tests/artifacts/qemu-summary.txt`.
+- The *Logs* GitHub workflow (`logs.yml`) executes `make test-smoke`, prints each summary in the Actions log, uploads the artifact bundle, and—when `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_S3_BUCKET` secrets are present—copies the files to `s3://$AWS_S3_BUCKET/logs/${GITHUB_RUN_ID}/` via the AWS CLI.
 
 ## TrenchBroom
 TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.

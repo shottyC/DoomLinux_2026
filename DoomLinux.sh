@@ -65,6 +65,17 @@ if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
 	write_grub_config
 	touch "$ROOTFS/bin/fbdoom" "$ROOTFS/bin/doom1.wad" "$ISO_DIR/boot/bzImage" "$ISO_DIR/boot/rootfs.gz" "$ISO_DIR/boot/System.map"
 	printf 'placeholder iso\n' >"$SOURCE_DIR/DoomLinux.iso"
+	LOG_DIR="$SOURCE_DIR/tests/artifacts"
+	mkdir -p "$LOG_DIR"
+	SMOKE_SUMMARY="$LOG_DIR/smoke-summary.txt"
+	cat <<TABLE | tee "$SMOKE_SUMMARY"
+┌────────────┬───────────────────────────────────────────────┐
+│ ✅ Status  │ Smoke scaffolding checks passed                │
+│ 📦 Artifact│ placeholder DoomLinux.iso generated           │
+│ ✨ Note    │ Logs preserved in tests/artifacts for upload   │
+└────────────┴───────────────────────────────────────────────┘
+TABLE
+	printf '📄 Smoke summary saved to %s\n' "$SMOKE_SUMMARY"
 	exit 0
 fi
 

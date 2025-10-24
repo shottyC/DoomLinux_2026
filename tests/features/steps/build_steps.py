@@ -100,3 +100,11 @@ def step_vscode_launch(context):
 def step_readme_miso(context):
     readme = REPO_ROOT / "README.md"
     assert "miso" in readme.read_text().lower(), "README should mention miso"
+
+
+@then("the smoke summary log is emoji rich")
+def step_smoke_summary(context):
+    summary = REPO_ROOT / "tests" / "artifacts" / "smoke-summary.txt"
+    assert summary.is_file(), "Smoke summary log missing"
+    content = summary.read_text()
+    assert "✅" in content and "✨" in content, "Smoke summary should contain celebratory emojis"

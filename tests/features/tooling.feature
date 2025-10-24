@@ -6,3 +6,4 @@ Feature: Developer tooling consistency
     And the devcontainer configuration is available
     And the VSCode launch configuration is available
     And the README references miso usage
+    And the smoke summary log is emoji rich

@@ -11,11 +11,13 @@ fi
 LOG_PATH=${QEMU_LOG:-tests/artifacts/qemu.log}
 QEMU_TIMEOUT=${QEMU_TIMEOUT:-90}
 QEMU_ARGS=${QEMU_ARGS:--m 512 -smp 1 -nographic -serial mon:stdio -no-reboot -no-shutdown}
+SUMMARY_PATH=${QEMU_SUMMARY:-tests/artifacts/qemu-summary.txt}
 
 # shellcheck disable=SC2206
 QEMU_ARGS_ARRAY=($QEMU_ARGS)
 
 mkdir -p "$(dirname "$LOG_PATH")"
+mkdir -p "$(dirname "$SUMMARY_PATH")"
 
 echo "Launching QEMU with ISO $ISO_PATH"
 
@@ -36,4 +38,14 @@ if ! grep -qi "Linux version" "$LOG_PATH"; then
 	exit 1
 fi
 
+cat <<TABLE | tee "$SUMMARY_PATH"
+┌────────────┬───────────────────────────────────────────────┐
+│ ✅ Status  │ QEMU boot log captured successfully            │
+│ 🕒 Timeout │ $QEMU_TIMEOUT seconds                          │
+│ 📜 Log     │ $LOG_PATH                                      │
+│ 🚀 Args    │ ${QEMU_ARGS_ARRAY[*]}                          │
+└────────────┴───────────────────────────────────────────────┘
+TABLE
+
 echo "QEMU log check passed"
+echo "📄 QEMU summary saved to $SUMMARY_PATH"

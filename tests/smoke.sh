@@ -20,4 +20,10 @@ test -d rootfs/tmp
 grep -q "TrenchBroom" rootfs/root/TRENCHBROOM-INSTALL.txt
 grep -q 'menuentry "DoomLinux"' iso/boot/grub/grub.cfg
 
+SUMMARY_PATH=tests/artifacts/smoke-summary.txt
+if [ -f "$SUMMARY_PATH" ]; then
+	echo "──── Smoke Summary ────"
+	cat "$SUMMARY_PATH"
+fi
+
 cleanup
