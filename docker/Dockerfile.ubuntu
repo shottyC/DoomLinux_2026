@@ -1,0 +1,35 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    make \
+    gawk \
+    gcc \
+    bc \
+    bison \
+    flex \
+    unzip \
+    rsync \
+    mtools \
+    xorriso \
+    libelf-dev \
+    libssl-dev \
+    grub-common \
+    grub-pc-bin \
+    grub-efi-amd64-bin \
+    cpio \
+    tar \
+    xz-utils \
+    file \
+    python3 \
+    dosfstools \
+    build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+COPY DoomLinux.sh ./DoomLinux.sh
+
+CMD ["bash", "-lc", "./DoomLinux.sh"]

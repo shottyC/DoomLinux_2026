@@ -18,6 +18,22 @@ This command will create an iso of DoomLinux which is bootable from USB stick.
 ```bash 
 sudo apt install wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common
 ```
+
+## Makefile Shortcuts
+Common workflows are available through the root `Makefile`.
+```bash
+make build            # Runs DoomLinux.sh natively
+make clean            # Removes build artifacts (rootfs/, staging/, iso/, DoomLinux.iso)
+make docker-run-ubuntu  # Builds and runs the Ubuntu-based container to produce DoomLinux.iso
+make docker-run-alpine  # Builds and runs the Alpine-based container to produce DoomLinux.iso
+```
+
+## Docker Builds
+Two container definitions live under `docker/`:
+- `Dockerfile.ubuntu` installs the Debian/Ubuntu toolchain listed above.
+- `Dockerfile.alpine` provides an Alpine Linux alternative with equivalent packages.
+
+Both images expect the repository to be mounted at `/workspace` (the Makefile targets handle this) and emit `DoomLinux.iso` back into the host checkout.
 ## Explanation
 ### Creating folders and downloading the source codes 
 
@@ -246,6 +262,9 @@ To run on QEMU :
 ```bash
 qemu-system-x86_64 DoomLinux.iso
 ```
+
+## TrenchBroom
+TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.
 
 ## DoomLinux in Action
 [![DoomLinux](https://img.youtube.com/vi/VaALEKWQOpg/0.jpg)](https://www.youtube.com/watch?v=VaALEKWQOpg)

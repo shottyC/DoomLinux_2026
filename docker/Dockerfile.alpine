@@ -1,0 +1,31 @@
+FROM alpine:3.19
+
+RUN apk add --no-cache \
+    bash \
+    build-base \
+    wget \
+    gawk \
+    bc \
+    bison \
+    flex \
+    unzip \
+    rsync \
+    mtools \
+    xorriso \
+    grub \
+    grub-bios \
+    cpio \
+    xz \
+    tar \
+    perl \
+    python3 \
+    elfutils-dev \
+    openssl-dev \
+    util-linux \
+    dosfstools
+
+WORKDIR /workspace
+
+COPY DoomLinux.sh ./DoomLinux.sh
+
+CMD ["sh", "-c", "./DoomLinux.sh"]

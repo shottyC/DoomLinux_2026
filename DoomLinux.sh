@@ -41,7 +41,18 @@ cp fbdoom $ROOTFS/bin/fbdoom
 cp $STAGING/doom1.wad $ROOTFS/bin/doom1.wad
 
 cd $ROOTFS
-mkdir -p bin dev mnt proc sys tmp
+mkdir -p bin dev mnt proc sys tmp root etc
+
+cat > $ROOTFS/root/TRENCHBROOM-INSTALL.txt <<'EOF'
+TrenchBroom is not bundled with DoomLinux.
+
+Install on a workstation with desktop support:
+  1. Download the latest TrenchBroom release from https://github.com/TrenchBroom/TrenchBroom/releases
+  2. Make the AppImage executable: chmod +x TrenchBroom-*.AppImage
+  3. Launch it: ./TrenchBroom-*.AppImage
+
+Export WAD files into this ISO by copying them into /bin/ inside the DoomLinux root filesystem before building, or mount the rootfs after boot and transfer over serial/USB.
+EOF
 
 echo '#!/bin/sh' > init
 echo 'dmesg -n 1' >> init
