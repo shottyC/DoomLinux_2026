@@ -140,6 +140,7 @@ download "https://kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.x
 download "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip" fbDOOM-master.zip
 download "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" doom1.wad
 download "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" busybox-static
+log_step "🔍" "Verified download queue (kernel, BusyBox, fbDOOM, WAD)"
 
 log_step "🧹" "Preserving extracted source directories (temporary cache)"
 
@@ -159,6 +160,7 @@ log_step "📦" "Installing BusyBox"
 install -m 0755 "$STAGING/busybox-static" "$ROOTFS/bin/busybox"
 rm -f "$ROOTFS/bin/linuxrc"
 rm -f "$STAGING/busybox-static"
+log_step "🛎️" "BusyBox symlinks will be installed at runtime via init"
 
 log_step "🎯" "Building FBDoom"
 cd "$STAGING/fbDOOM-master/fbdoom"
@@ -173,6 +175,7 @@ PY
 make -j"$(nproc)"
 cp fbdoom "$ROOTFS/bin/fbdoom"
 cp "$STAGING/doom1.wad" "$ROOTFS/bin/doom1.wad"
+log_step "🕹️" "fbdoom binary and WAD deployed"
 
 log_step "🌳" "Preparing root filesystem"
 cd "$ROOTFS"
@@ -182,6 +185,7 @@ write_init_script
 
 log_step "🗜️" "Packing root filesystem"
 find . | cpio -R root:root -H newc -o --quiet | gzip >"$ISO_DIR/boot/rootfs.gz"
+log_step "📦" "rootfs archive ready"
 
 log_step "🧵" "Configuring Linux kernel"
 cd "$STAGING/linux-${KERNEL_VERSION}"
@@ -233,9 +237,11 @@ log_step "🧱" "Building Linux kernel"
 make CC="$KERNEL_CC" SKIP_STACK_VALIDATION=1 bzImage -j"$(nproc)"
 cp arch/x86/boot/bzImage "$ISO_DIR/boot/bzImage"
 cp System.map "$ISO_DIR/boot/System.map"
+log_step "🪵" "Kernel bzImage packaged"
 
 log_step "📚" "Installing kernel headers"
 make CC="$KERNEL_CC" SKIP_STACK_VALIDATION=1 INSTALL_HDR_PATH="$ROOTFS" headers_install -j"$(nproc)"
+log_step "📚" "Kernel headers staged in rootfs"
 
 log_step "🧾" "Writing GRUB configuration"
 mkdir -p "$ISO_DIR/boot/grub"
