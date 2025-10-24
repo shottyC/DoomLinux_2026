@@ -5,6 +5,11 @@ staging/
 tests/vagrant/.vagrant/
 tests/vagrant/qemu.log
 tests/artifacts/
+staging/*.tar.xz
+staging/*.tar.bz2
+staging/*.zip
+staging/*.wad
+staging/busybox-static
 .coverage
 coverage.xml
 coverage.txt

@@ -141,12 +141,19 @@ download "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip" f
 download "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" doom1.wad
 download "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" busybox-static
 
-log_step "🧹" "Resetting extracted source directories"
-rm -rf "linux-${KERNEL_VERSION}" "busybox-${BUSYBOX_VERSION}" fbDOOM-master
+log_step "🧹" "Preserving extracted source directories (temporary cache)"
 
 log_step "🗂️" "Extracting sources"
-tar -xf kernel.tar.xz
-unzip -q fbDOOM-master.zip
+if [ ! -d "linux-${KERNEL_VERSION}" ]; then
+	tar -xf kernel.tar.xz
+else
+	log_step "♻️" "Reusing existing linux-${KERNEL_VERSION} tree"
+fi
+if [ ! -d fbDOOM-master ]; then
+	unzip -q fbDOOM-master.zip
+else
+	log_step "♻️" "Reusing existing fbDOOM-master tree"
+fi
 
 log_step "📦" "Installing BusyBox"
 install -m 0755 "$STAGING/busybox-static" "$ROOTFS/bin/busybox"
