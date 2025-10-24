@@ -7,6 +7,7 @@
 - `sudo apt install wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common` prepares a Debian-based host with the documented toolchain.
 - `make build` or `./DoomLinux.sh` performs a full build and emits `DoomLinux.iso`. You can override versions with `KERNEL_VERSION=... BUSYBOX_VERSION=... make build`.
 - `make docker-run-ubuntu` / `make docker-run-alpine` execute the build inside preconfigured containers and leave `DoomLinux.iso` in the project root.
+- `make lint` runs ShellCheck and shfmt (local tools preferred, Docker fallback).
 - `make test-smoke` exercises a lightweight functional check that uses the smoke-mode build path to ensure key artifacts appear.
 - `make test-bdd` installs local Python dependencies and runs the behavior-driven scenarios under `tests/features/`.
 - `qemu-system-x86_64 DoomLinux.iso` sanity-checks the image in a VM. Capture console output for review when reporting issues.
@@ -19,4 +20,4 @@ Stick to POSIX shell so the script remains portable under `/bin/sh`. Use upperca
 Automated coverage is split between `tests/smoke.sh` for fast functional checks and `tests/features/*.feature` for behavior-driven assertions (powered by `behave`). Always run `make test-smoke` before submitting changes; run `make test-bdd` whenever modifying workflow logic, filesystem layout, or documentation referenced by the scenarios. For code that touches the real build pipeline, still validate by building the ISO and booting it in QEMU or real hardware. If you touch kernel or BusyBox configuration, document the change and verify the resulting options by inspecting `.config` or running `grep CONFIG_* linux-*/.config`.
 
 ## Commit & Pull Request Guidelines
-Follow the repository’s short, descriptive commit style (e.g., “Boschs display DRM added”). Keep the summary under ~60 characters, use present tense, and include focused commits for each functional change. Pull requests should link related issues, outline the motivation, list the exact commands run (`./DoomLinux.sh`, QEMU invocation, hardware smoke tests), and mention any new dependencies or artifacts that reviewers need to fetch. Add screenshots or serial logs if gameplay or boot output changed visibly.
+Follow the repository’s short, descriptive commit style (e.g., “Boschs display DRM added”). Keep the summary under ~60 characters, use present tense, and include focused commits for each functional change. Pull requests should link related issues, outline the motivation, list the exact commands run (`./DoomLinux.sh`, `make lint`, QEMU invocation, hardware smoke tests), and mention any new dependencies or artifacts that reviewers need to fetch. Add screenshots or serial logs if gameplay or boot output changed visibly.

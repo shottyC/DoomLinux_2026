@@ -2,7 +2,7 @@
 set -eu
 
 cleanup() {
-    rm -rf rootfs staging iso DoomLinux.iso
+	rm -rf rootfs staging iso DoomLinux.iso
 }
 
 cleanup
