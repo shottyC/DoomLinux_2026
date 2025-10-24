@@ -295,6 +295,7 @@ Use `make lint` to run ShellCheck and shfmt. The target prefers locally installe
 - **Emoji summaries**: Smoke and QEMU checks emit emoji-enhanced tables into `tests/artifacts/*.txt`. They’re surfaced in CI logs and ready for artifact upload.
 - **CSV/LaTeX exports**: `make convert-logs` (or `./scripts/log-convert.sh`) creates `smoke-summary.csv` / `.tex` for dashboards and papers.
 - **Coverage**: `make coverage-report` (or `./scripts/coverage-report.sh`) runs behave under coverage.py, storing `coverage.txt` and `coverage.xml` in `tests/artifacts/`.
+- **Auto-docker fallback**: Running `./DoomLinux.sh` on macOS or other hosts without Linux headers automatically delegates the heavy lifting to the bundled Docker builder (`docker/Dockerfile.ubuntu`). Ensure Docker is installed if you aren’t on Linux.
 
 ## Log Publishing
 - Developer and CI runs drop log summaries under `tests/artifacts/`; see `tests/artifacts/smoke-summary.txt` and `tests/artifacts/qemu-summary.txt`.

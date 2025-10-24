@@ -16,6 +16,7 @@
 - `make convert-logs` or `./scripts/log-convert.sh` export summary tables to CSV/LaTeX for reports.
 - `make lint-logs` or `./scripts/log-lint.sh` scans artifact logs for obvious failures.
 - `make coverage-report` or `./scripts/coverage-report.sh` generates coverage metrics under `tests/artifacts/`.
+- `./DoomLinux.sh` automatically falls back to the Docker builder on non-Linux hosts—ensure Docker is available or set `DOOMLINUX_TEST_MODE=smoke` for quick scaffolds.
 - Emoji summaries land in `tests/artifacts/` (e.g., `smoke-summary.txt`, `qemu-summary.txt`) and are uploaded by CI workflows.
 - `qemu-system-x86_64 DoomLinux.iso` sanity-checks the image in a VM. Capture console output for review when reporting issues.
 - `rm -rf rootfs staging iso DoomLinux.iso` resets the workspace for a clean rebuild; avoid running it if you need artifacts for debugging.
