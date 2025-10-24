@@ -1,5 +1,5 @@
 
-# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
+# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
 A single script to build a minimal live Linux operating system from source code that runs Doom on boot.
 ```bash
 ./DoomLinux.sh
@@ -29,6 +29,9 @@ make docker-run-alpine  # Builds and runs the Alpine-based container to produce 
 make lint               # Runs shellcheck and shfmt locally (or via Docker fallback)
 make test-smoke       # Lightweight functional smoke test using placeholder artifacts
 make test-bdd         # Behavior-driven tests powered by behave
+make test-qemu        # Boots DoomLinux.iso in headless QEMU (requires qemu-system-x86)
+make test-vagrant     # Boots DoomLinux.iso via Vagrant Docker provider (requires vagrant + docker)
+make test-integration # Convenience target that runs both QEMU and Vagrant checks
 ```
 
 ## Docker Builds
@@ -270,6 +273,8 @@ qemu-system-x86_64 DoomLinux.iso
 Run `make test-smoke` to execute a fast functional check. It drives `DoomLinux.sh` in smoke mode (no downloads or compilation) and verifies that core artifacts are scaffolded.
 
 Behavior-driven regression coverage lives under `tests/features/`. Install Python 3 and run `make test-bdd` (which installs `behave` locally if needed) to execute the scenarios.
+
+For boot validation, run `make test-qemu` (requires `qemu-system-x86_64`) to launch the generated ISO headlessly and confirm kernel startup logs. Use `make test-vagrant` to run the same check inside a disposable Vagrant Docker guest—handy for reproducing matrix failures locally. Both commands expect `DoomLinux.iso` to already exist; invoke `make test-integration` to execute them back-to-back.
 
 ## Linting
 Use `make lint` to run ShellCheck and shfmt. The target prefers locally installed tools and falls back to Docker images (`koalaman/shellcheck` and `mvdan/shfmt`) when they are absent.

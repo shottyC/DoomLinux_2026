@@ -2,3 +2,6 @@
 iso/
 rootfs/
 staging/
+tests/vagrant/.vagrant/
+tests/vagrant/qemu.log
+tests/artifacts/

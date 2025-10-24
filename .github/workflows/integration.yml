@@ -1,0 +1,97 @@
+name: Integration Matrix
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-qemu:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [native, docker-ubuntu, docker-alpine]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies (native)
+        if: matrix.target == 'native'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin cpio tar xz-utils file dosfstools
+
+      - name: Build ISO
+        run: |
+          case "${{ matrix.target }}" in
+            native)
+              ./DoomLinux.sh
+              ;;
+            docker-ubuntu)
+              make docker-run-ubuntu
+              ;;
+            docker-alpine)
+              make docker-run-alpine
+              ;;
+          esac
+
+      - name: Install QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86-headless
+
+      - name: Run QEMU boot check
+        run: ./tests/run_qemu.sh DoomLinux.iso
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoomLinux-${{ matrix.target }}
+          path: DoomLinux.iso
+
+      - name: Upload QEMU log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-log-${{ matrix.target }}
+          path: tests/artifacts/qemu.log
+          if-no-files-found: ignore
+
+  vagrant-matrix:
+    needs: build-and-qemu
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [native, docker-ubuntu, docker-alpine]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: DoomLinux-${{ matrix.target }}
+          path: .
+
+      - name: Normalize ISO path
+        run: |
+          if [ ! -f DoomLinux.iso ] && [ -f "DoomLinux-${{ matrix.target }}/DoomLinux.iso" ]; then
+            mv "DoomLinux-${{ matrix.target }}/DoomLinux.iso" DoomLinux.iso
+          fi
+
+      - name: Install Vagrant and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y vagrant docker.io qemu-system-x86-headless
+
+      - name: Run Vagrant boot check
+        run: sudo -E VAGRANT_DEFAULT_PROVIDER=docker tests/vagrant/test.sh
+
+      - name: Upload Vagrant QEMU log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vagrant-qemu-log-${{ matrix.target }}
+          path: tests/vagrant/qemu.log
+          if-no-files-found: ignore

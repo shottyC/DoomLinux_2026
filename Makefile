@@ -1,4 +1,4 @@
-.PHONY: build clean docker-build-ubuntu docker-build-alpine docker-run-ubuntu docker-run-alpine docker-shell-ubuntu docker-shell-alpine lint lint-shellcheck lint-shfmt test-smoke test-bdd test
+.PHONY: build clean docker-build-ubuntu docker-build-alpine docker-run-ubuntu docker-run-alpine docker-shell-ubuntu docker-shell-alpine lint lint-shellcheck lint-shfmt test-smoke test-bdd test test-qemu test-vagrant test-integration
 
 build:
 	./DoomLinux.sh
@@ -28,16 +28,16 @@ lint: lint-shellcheck lint-shfmt
 
 lint-shellcheck:
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		shellcheck DoomLinux.sh tests/smoke.sh; \
+		shellcheck DoomLinux.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	else \
-		docker run --rm -v $(CURDIR):/workspace -w /workspace koalaman/shellcheck:stable DoomLinux.sh tests/smoke.sh; \
+		docker run --rm -v $(CURDIR):/workspace -w /workspace koalaman/shellcheck:stable DoomLinux.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	fi
 
 lint-shfmt:
 	@if command -v shfmt >/dev/null 2>&1; then \
-		shfmt -d DoomLinux.sh tests/smoke.sh; \
+		shfmt -d DoomLinux.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	else \
-		docker run --rm -v $(CURDIR):/workspace -w /workspace mvdan/shfmt -d DoomLinux.sh tests/smoke.sh; \
+		docker run --rm -v $(CURDIR):/workspace -w /workspace mvdan/shfmt -d DoomLinux.sh tests/smoke.sh tests/run_qemu.sh tests/vagrant/test.sh; \
 	fi
 
 test-smoke:
@@ -48,3 +48,11 @@ test-bdd:
 	python3 -m behave tests/features
 
 test: test-smoke test-bdd
+
+test-qemu:
+	./tests/run_qemu.sh DoomLinux.iso
+
+test-vagrant:
+	VAGRANT_DEFAULT_PROVIDER=$${VAGRANT_DEFAULT_PROVIDER:-docker} tests/vagrant/test.sh
+
+test-integration: test-qemu test-vagrant

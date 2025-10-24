@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ISO_PATH=${1:-DoomLinux.iso}
+if [ ! -f "$ISO_PATH" ]; then
+	echo "ISO not found: $ISO_PATH" >&2
+	exit 1
+fi
+
+LOG_PATH=${QEMU_LOG:-tests/artifacts/qemu.log}
+QEMU_TIMEOUT=${QEMU_TIMEOUT:-90}
+QEMU_ARGS=${QEMU_ARGS:--m 512 -smp 1 -nographic -serial mon:stdio -no-reboot -no-shutdown}
+
+# shellcheck disable=SC2206
+QEMU_ARGS_ARRAY=($QEMU_ARGS)
+
+mkdir -p "$(dirname "$LOG_PATH")"
+
+echo "Launching QEMU with ISO $ISO_PATH"
+
+set +e
+timeout "$QEMU_TIMEOUT" qemu-system-x86_64 -cdrom "$ISO_PATH" -boot d "${QEMU_ARGS_ARRAY[@]}" >"$LOG_PATH" 2>&1
+status=$?
+set -e
+
+if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
+	echo "QEMU exited with status $status"
+	cat "$LOG_PATH" || true
+	exit "$status"
+fi
+
+if ! grep -qi "Linux version" "$LOG_PATH"; then
+	echo "Kernel boot signature not detected in QEMU log"
+	cat "$LOG_PATH" || true
+	exit 1
+fi
+
+echo "QEMU log check passed"
