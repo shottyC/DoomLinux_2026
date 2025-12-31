@@ -1,10 +1,11 @@
 name: Log Publisher
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+  workflow_dispatch:
 
 jobs:
   logs:
@@ -12,24 +13,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate smoke summary logs
+      # Ensure artifact directories exist (optional safety)
+      - name: Create artifacts directory
+        run: mkdir -p tests/artifacts
+
+      # Generate smoke test logs if not already generated
+      - name: Run smoke tests
         run: make test-smoke
 
-      - name: Display log summaries
+      # Display smoke test logs
+      - name: Display smoke summary
+        if: test -f tests/artifacts/smoke-summary.txt
         run: |
           echo '── Smoke Summary ──'
           cat tests/artifacts/smoke-summary.txt
-          if [ -f tests/artifacts/qemu-summary.txt ]; then
-            echo '── QEMU Summary ──'
-            cat tests/artifacts/qemu-summary.txt
-          fi
 
-      - name: Upload log artifacts
+      # Display QEMU logs if present
+      - name: Display QEMU summary
+        if: test -f tests/artifacts/qemu-summary.txt
+        run: |
+          echo '── QEMU Summary ──'
+          cat tests/artifacts/qemu-summary.txt
+
+      # Display coverage logs if present
+      - name: Display coverage summary
+        if: test -f tests/artifacts/coverage.txt
+        run: |
+          echo '── Coverage Summary ──'
+          cat tests/artifacts/coverage.txt
+
+      # Upload all artifacts
+      - name: Upload all artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: emoji-log-summaries
+          name: ci-artifacts
           path: tests/artifacts/
 
+      # Optional AWS S3 upload
       - name: Install AWS CLI
         if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_S3_BUCKET != '' }}
         run: sudo apt-get update && sudo apt-get install -y awscli
@@ -44,4 +64,5 @@ jobs:
 
       - name: Push logs to S3
         if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_S3_BUCKET != '' }}
-        run: aws s3 cp tests/artifacts "s3://${{ secrets.AWS_S3_BUCKET }}/logs/${GITHUB_RUN_ID}/" --recursive
+        run: |
+          aws s3 cp tests/artifacts "s3://${{ secrets.AWS_S3_BUCKET }}/logs/${GITHUB_RUN_ID}/" --recursive
