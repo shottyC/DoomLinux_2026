@@ -13,35 +13,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [native, docker-ubuntu, docker-alpine]
+        target: [native, docker]
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ensure scripts are executable
-        run: chmod +x ./DoomLinux.sh ./tests/run_qemu.sh
-
-      - name: Install build dependencies (native)
-        if: matrix.target == 'native'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            wget curl make gawk gcc bc bison flex unzip rsync mtools \
-            xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin \
-            cpio tar xz-utils file dosfstools qemu-system-x86-headless
+      - name: Build devcontainer
+        run: docker build -t doomlinux-devcontainer -f .devcontainer/Dockerfile .
 
       - name: Build ISO
         run: |
-          case "${{ matrix.target }}" in
-            native)
-              ./DoomLinux.sh
-              ;;
-            docker-ubuntu)
-              make docker-run-ubuntu
-              ;;
-            docker-alpine)
-              make docker-run-alpine
-              ;;
-          esac
+          if [ "${{ matrix.target }}" == "native" ]; then
+            docker run --rm -v ${{ github.workspace }}:/workspace doomlinux-devcontainer \
+            bash /workspace/DoomLinux.sh
+          else
+            docker run --rm -v ${{ github.workspace }}:/workspace doomlinux-devcontainer \
+            bash /workspace/DoomLinux.sh --docker
+          fi
+
+      - name: Install QEMU
+        run: sudo apt-get update && sudo apt-get install -y qemu-system-x86
 
       - name: Run QEMU boot check
         run: ./tests/run_qemu.sh DoomLinux.iso
@@ -66,7 +57,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [native, docker-ubuntu, docker-alpine]
+        target: [native, docker]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -81,15 +73,6 @@ jobs:
           if [ ! -f DoomLinux.iso ] && [ -f "DoomLinux-${{ matrix.target }}/DoomLinux.iso" ]; then
             mv "DoomLinux-${{ matrix.target }}/DoomLinux.iso" DoomLinux.iso
           fi
-          chmod +x DoomLinux.iso
-
-      - name: Install Vagrant and QEMU
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y vagrant docker.io qemu-system-x86-headless
-
-      - name: Ensure Vagrant test script is executable
-        run: chmod +x tests/vagrant/test.sh
 
       - name: Run Vagrant boot check
         run: sudo -E VAGRANT_DEFAULT_PROVIDER=docker tests/vagrant/test.sh
