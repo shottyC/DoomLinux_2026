@@ -35,7 +35,7 @@ jobs:
       # 5️⃣ Run shell lint checks
       - name: Lint shell scripts
         run: |
-          shfmt -d -s ./DoomLinux.sh
+          shfmt -d -i 4 ./DoomLinux.sh
           shellcheck ./DoomLinux.sh
 
       # 6️⃣ Run Python lint checks
