@@ -1,316 +1,273 @@
+# DoomLinux ![Build and Release](https://github.com/shottyC/DoomLinux_2026/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/shottyC/DoomLinux_2026/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/shottyC/DoomLinux_2026/actions/workflows/integration.yml/badge.svg) ![Reports](https://github.com/shottyC/DoomLinux_2026/actions/workflows/reports.yml/badge.svg) ![Dev Tooling](https://github.com/shottyC/DoomLinux_2026/actions/workflows/tooling.yml/badge.svg) ![Logs](https://github.com/shottyC/DoomLinux_2026/actions/workflows/logs.yml/badge.svg) ![Lint](https://github.com/shottyC/DoomLinux_2026/actions/workflows/lint.yml/badge.svg)
 
-# DoomLinux ![Build and Release](https://github.com/realagiorganization/DoomLinux/actions/workflows/build.yml/badge.svg) ![Test Suite](https://github.com/realagiorganization/DoomLinux/actions/workflows/tests.yml/badge.svg) ![Integration](https://github.com/realagiorganization/DoomLinux/actions/workflows/integration.yml/badge.svg) ![Reports](https://github.com/realagiorganization/DoomLinux/actions/workflows/reports.yml/badge.svg) ![Dev Tooling](https://github.com/realagiorganization/DoomLinux/actions/workflows/tooling.yml/badge.svg) ![Logs](https://github.com/realagiorganization/DoomLinux/actions/workflows/logs.yml/badge.svg) ![Lint](https://github.com/realagiorganization/DoomLinux/actions/workflows/lint.yml/badge.svg)
-A single script to build a minimal live Linux operating system from source code that runs Doom on boot.
+A single script to build a minimal live Linux operating system from source code that runs **Doom** on boot.
+
 ```bash
 ./DoomLinux.sh
 ```
-This command will create an iso of DoomLinux which is bootable from USB stick.
 
-## What it does
-- Downloads Linux Kernel 5.4.3 source and compiles it with a minimal configuration
-- Downloads Busybox 1.35.0 source and compiles it statically.
-- Downloads FBDoom and compiles it statically.
-- Creates rootfs for linux kernel.
-- Generates grub configuration
-- Creates a bootable live Linux iso that runs Doom on boot.
+This command creates a bootable **DoomLinux.iso**, suitable for USB sticks or virtual machines.
+
+---
+
+## ⚠️ Caution
+
+This fork was substantively aided by interactions with ChatGPT. Please review changes carefully and treat the result as an educational system rather than a hardened distribution.
+
+---
+
+## Overview
+
+DoomLinux is a self-contained Linux ISO that boots directly into **fbDOOM** using a custom Linux **6.6.119** kernel, a BusyBox-based initramfs, and GRUB. It is designed primarily for **QEMU / virtualized environments** and exists as a minimal, reproducible system build rather than a general-purpose distribution.
+
+It intentionally avoids:
+
+* systemd
+* glibc userlands
+* package managers
+* networking
+
+---
+
+## What It Does
+
+1. **Environment detection**
+
+   * Builds natively on Linux when possible
+   * Automatically falls back to Docker on macOS or non-Linux hosts
+
+2. **Downloads required sources**
+
+   * Linux kernel `6.6.119`
+   * BusyBox `1.35.0` (static musl binary)
+   * fbDOOM ([https://github.com/maximevince/fbDOOM](https://github.com/maximevince/fbDOOM))
+   * `doom1.wad` (shareware)
+
+3. **Builds fbDOOM**
+
+   * Forces static linking
+   * Disables SDL paths
+
+4. **Creates a minimal root filesystem**
+
+   * BusyBox-provided `/bin/sh`
+   * Custom `/init` script
+   * fbDOOM binary and WAD
+
+5. **Builds a custom Linux kernel**
+
+   * Framebuffer + DRM support for QEMU
+   * Networking, sound, EFI disabled
+   * Optimized for size
+
+6. **Packages everything**
+
+   * `rootfs.gz` initramfs
+   * `bzImage` kernel
+   * GRUB bootloader
+
+7. **Outputs a bootable ISO**
+
+   * `DoomLinux.iso`
+
+---
+
+## Features
+
+* Boots directly into fbDOOM on a framebuffer console
+* Custom-built Linux 6.6.119 kernel
+* BusyBox static userland
+* Minimal initramfs (`/init`, no systemd)
+* GRUB-bootable ISO
+* Reliable operation under QEMU (BIOS mode)
+* Docker-assisted builds on non-Linux hosts
+* Deterministic, single-script build process
+
+---
 
 ## Build Dependencies
+
 ```bash
 sudo apt install wget curl make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common
 ```
-Alternatively, run `./scripts/install-deps.sh` (supports `--dry-run` for auditing the package list).
+
+Alternatively:
+
+```bash
+./scripts/install-deps.sh
+./scripts/install-deps.sh --dry-run
+```
+
+---
 
 ## Makefile Shortcuts
-Common workflows are available through the root `Makefile`.
+
 ```bash
-make build            # Runs DoomLinux.sh natively
-make clean            # Removes build artifacts (rootfs/, staging/, iso/, DoomLinux.iso)
-make docker-run-ubuntu  # Builds and runs the Ubuntu-based container to produce DoomLinux.iso
-make docker-run-alpine  # Builds and runs the Alpine-based container to produce DoomLinux.iso
-make lint               # Runs shellcheck and shfmt locally (or via Docker fallback)
-make test-smoke       # Lightweight functional smoke test using placeholder artifacts
-make test-bdd         # Behavior-driven tests powered by behave
-make test-qemu        # Boots DoomLinux.iso in headless QEMU (requires qemu-system-x86)
-make test-vagrant     # Boots DoomLinux.iso via Vagrant Docker provider (requires vagrant + docker)
-make test-integration # Convenience target that runs both QEMU and Vagrant checks
-make convert-logs     # Convert emoji summaries into CSV and LaTeX tables (tests/artifacts/*.csv|*.tex)
-make lint-logs        # Scan log artifacts for error markers
-make coverage-report  # Generate coverage.txt and coverage.xml with coverage.py
-make reports          # Run smoke, conversions, log lint, and coverage in a single pass
-./scripts/install-deps.sh --dry-run  # Show required packages for manual installation
+make build
+make clean
+make docker-run-ubuntu
+make docker-run-alpine
+make lint
+make test-smoke
+make test-bdd
+make test-qemu
+make test-vagrant
+make test-integration
+make convert-logs
+make lint-logs
+make coverage-report
+make reports
 ```
+
+---
 
 ## Docker Builds
+
 Two container definitions live under `docker/`:
-- `Dockerfile.ubuntu` installs the Debian/Ubuntu toolchain listed above.
-- `Dockerfile.alpine` provides an Alpine Linux alternative with equivalent packages.
 
-Both images expect the repository to be mounted at `/workspace` (the Makefile targets handle this) and emit `DoomLinux.iso` back into the host checkout.
-## Explanation
-### Creating folders and downloading the source codes 
+* `Dockerfile.ubuntu` – Ubuntu-based toolchain
+* `Dockerfile.alpine` – Alpine Linux alternative
 
-We need to create some folders for managing the codes
-```bash
-mkdir -p rootfs
-mkdir -p staging
-mkdir -p iso/boot
-```
-- rootfs - It is the root file system of DoomLinux. 
-```
-		rootfs
-		├── bin (Busybox and fbdoom binaries)
-		├── dev (All the available devices)
-		├── mnt (Mount point for temporary external media)
-		├── proc (Different information of currently running kernel)
-		├── sys (Directory for virtual filesystem)
-		└── tmp (Directory for temporary files required during runtime)
-```
-- staging - Here all the source codes are downloaded and compiled.
-- iso - It is the folder structure for grub to make a bootable iso. In boot folder we will place grub.cfg  
-```
-		iso
-		└── boot
-		    ├── bzImage (Compiled Linux Kernel)
-		    ├── grub
-		    │   └── grub.cfg (Grub Configuration)
-		    ├── rootfs.gz (Compressed root file system)
-		    └── System.map (System map that is compiled with kernel)
-```
-Setting variables to make things easy
-```bash
-KERNEL_VERSION=5.4.3
-BUSYBOX_VERSION=1.35.0
+Both mount the repository at `/workspace` and emit `DoomLinux.iso` back into the host checkout.
 
-SOURCE_DIR=$PWD
-ROOTFS=$SOURCE_DIR/rootfs
-STAGING=$SOURCE_DIR/staging
-ISO_DIR=$SOURCE_DIR/iso
-```
-We need to download the required source codes in staging folder and extract them.
-- Linux kernel 5.4.3
-- Busybox 1.35.0 - For creating minimum shell environment. 
-- FBDoom - A port of Doom original source code for Linux framebuffer.
-- Doom shareware - The shareware version of Doom. You can use other versions if you want.
+---
 
-```bash
-cd $STAGING
-wget -nc -O kernel.tar.xz http://kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz
-wget -nc -O busybox.tar.bz2 http://busybox.net/downloads/busybox-${BUSYBOX_VERSION}.tar.bz2
-wget -nc -O fbDOOM-master.zip https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip
-wget -nc -O doom1.wad https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad
+## Script Architecture
 
-tar -xvf kernel.tar.xz
-tar -xvf busybox.tar.bz2
-unzip fbDOOM-master.zip
-```
-### Configuring the kernel and compile it
-Change directory to kernel source.
-```bash
-cd $STAGING
-cd linux-${KERNEL_VERSION}
-```
-Creating a config file for kernel.
-You can use either of the following
-```bash
-make -j$(nproc) defconfig # Creates a ".config" file with default options from current architecture
-make -j$(nproc) menuconfig # Menu-driven user interface for configuring kernel
-make -j$(nproc) xconfig # GUI based user interface for configuring kernel
-```
--j$(nproc) flag sets the number of jobs to the number of CPU cores/threads available. It make things compile faster. 
+### Directory Layout
 
-Now we will make a couple of changes in the .config file to make our kernel size smaller. It will also reduce the compile time.
+```
+rootfs/
+├── bin/        # BusyBox + fbdoom
+├── dev/        # devtmpfs
+├── proc/       # procfs
+├── sys/        # sysfs
+├── mnt/        # temporary mounts
+├── tmp/        # temporary files
+└── root/
 
-Use xz kernel compression instead of gzip
-```bash
-sed -i "s|.*# CONFIG_KERNEL_XZ is not set.*|CONFIG_KERNEL_XZ=y|" .config
-sed -i "s|.*CONFIG_KERNEL_GZIP=y.*|# CONFIG_KERNEL_GZIP is not set|" .config
-```
-Disable sound drivers.
-```bash
-sed -i "s|.*CONFIG_SOUND=y.*|# CONFIG_SOUND is not set|" .config
-```
-Disable network drivers.
-```bash
-sed -i "s|.*CONFIG_NET=y.*|# CONFIG_NET is not set|" .config
-```
-Disable EFI stubs.
-```bash
-sed -i "s|.*CONFIG_EFI=y.*|# CONFIG_EFI is not set|" .config 
-sed -i "s|.*CONFIG_EFI_STUB=y.*|# CONFIG_EFI_STUB is not set|" .config
-```
-Disable kernel debug.
-```bash  
-sed -i "s/^CONFIG_DEBUG_KERNEL.*/\\# CONFIG_DEBUG_KERNEL is not set/" .config
-```
-Optimize for size. 
-```bash
-sed -i "s|.*CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y.*|# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set|" .config
-sed -i "s|.*# CONFIG_CC_OPTIMIZE_FOR_SIZE is not set.*|CONFIG_CC_OPTIMIZE_FOR_SIZE=y|" .config
-```
-Change host name
-```bash
-sed -i "s|.*CONFIG_DEFAULT_HOSTNAME=*|CONFIG_DEFAULT_HOSTNAME=\"DoomLinux\"|" .config
-```
-Enable Bochs dispi vga interface for QEMU
-```bash
-sed -i "s|.*# CONFIG_DRM_BOCHS is not set*|CONFIG_DRM_BOCHS=y|" .config
+staging/        # downloaded & compiled sources
+
+iso/
+└── boot/
+    ├── bzImage
+    ├── rootfs.gz
+    ├── System.map
+    └── grub/grub.cfg
 ```
 
-Now compile the kernel and copy the binaries.
-```bash
-make -j$(nproc) bzImage
-cp arch/x86/boot/bzImage $SOURCE_DIR/iso/boot/bzImage
-cp System.map $SOURCE_DIR/iso/boot/System.map
-```
-### Configuring busybox and compile it
-```bash
-cd  $STAGING
-cd busybox-${BUSYBOX_VERSION}
-make defconfig
-LDFLAGS="--static" make busybox install -j$(nproc)
-cd _install
-cp -r ./ $ROOTFS/
-cd $ROOTFS
-rm -f linuxrc
-```
-These commands will statically compile busybox. The default installation folder for busybox is _install. We will copy the compiled binaries from there to our rootfs. 
-### Compile FBDoom statically
-```bash
-cd $STAGING
-cd fbDOOM-master/fbdoom
-sed -i "s|CFLAGS+=-ggdb3 -Os|CFLAGS+=-ggdb3 -Os -static|" Makefile
-sed -i "s|ifneq (\$(NOSDL),1)|ifeq (\$(LINK_SDL),1)|" Makefile
-make -j$(nproc)
-cp fbdoom $ROOTFS/bin/fbdoom
-cp $STAGING/doom1.wad $ROOTFS/bin/doom1.wad
-```
-We need to statically compile FBDoom to work it in our system with minimal dependencies. The above commands will do that for us and it will also copy the doom1.wad in our root folder.
-### Archive rootfs
-We will create additional folders so that Linux kernel can use them on runtime.
-```bash
-cd $ROOTFS
-mkdir -p dev proc sys mnt tmp
-```
-Now we will create a init file for our kernel.
-```bash
-echo '#!/bin/sh' > init
-```
-Suppress all messages from the kernel except panic messages.
-```bash
-echo 'dmesg -n 1' >> init
-```
-Mount dev folder to devtmpfs
-```bash
-echo 'mount -t devtmpfs none /dev' >> init
-```
-Mount proc folder to proc
-```bash
-echo 'mount -t proc none /proc' >> init
-```
-Mount sys folder to sysfs
-```bash
-echo 'mount -t sysfs none /sys' >> init
-```
-Run doom right after booting the kernel. After that we will run busybox with cttyhack to stop kernel panic if we want to exit busybox. It will open another shell instead.
-```bash
-echo 'fbdoom -iwad /bin/doom1.wad' >> init
-echo 'setsid cttyhack /bin/sh' >> init
-```
-We must have to make the init file executable. 
-```bash
-chmod +x init
-```
-Now archive the rootfs with cpio.
-```bash
-cd $ROOTFS
-find . | cpio -R root:root -H newc -o | gzip > $SOURCE_DIR/iso/boot/rootfs.gz
-```
-### Using GRUB bootloader to boot DoomLinux
-Create a grub configuration file in iso/boot directory.
-```bash
-cd $SOURCE_DIR/iso/boot
-mkdir -p grub
-cd grub
-cat > grub.cfg << EOF
-set default=0
-set timeout=30
+---
 
-# Menu Colours
-set menu_color_normal=white/black
-set menu_color_highlight=white/green
+## Kernel Configuration Highlights
 
-root (hd0,0)
+The kernel is generated from `defconfig` and programmatically tuned:
 
-menuentry "DoomLinux" {      
-  linux  /boot/bzImage
-  initrd /boot/rootfs.gz
-}
-EOF
-```
-These are the location of our compiled kernel and archived rootfs.
-```
-  linux  /boot/bzImage
-  initrd /boot/rootfs.gz
-```
-Finally create DoomLinux bootable iso
-```bash
-cd $SOURCE_DIR
-grub-mkrescue --compress=xz -o DoomLinux.iso iso
-```
-**You can now write the iso in your USB stick and play Doom.**
-## Compiled size
-The final iso should be around 20 MB in size depending on the architecture. 
-For my x86_64 CPU the compiled kernel size is 4.1 MB and the iso is 17.9 MB.
-## Acknowledgements
-- [Write your own Operating System](https://www.youtube.com/watch?v=asnXWOUKhTA)
-- [Minimal linux script](https://github.com/ivandavidov/minimal-linux-script)
-- [FBDoom](https://github.com/maximevince/fbDOOM)
+* Framebuffer + DRM enabled
+* QEMU-friendly drivers (`bochs`, `virtio-gpu`)
+* Networking, sound, EFI disabled
+* KASLR disabled
+* Size-optimized compiler flags
 
-## Run
+---
+
+## Init Process
+
+The generated `/init` script:
+
+* Installs BusyBox applets
+* Mounts `/dev`, `/proc`, and `/sys`
+* Waits for `/dev/fb0`
+* Launches fbDOOM directly
+* Falls back to a shell if framebuffer init fails
+
+---
+
+## Running DoomLinux
+
 ### Real Hardware
-Write the iso image on USB stick and boot it from BIOS menu.
+
+Write `DoomLinux.iso` to a USB stick and boot via BIOS.
+
 ### QEMU
-To run on QEMU :
+
 ```bash
-qemu-system-x86_64 DoomLinux.iso
+qemu-system-x86_64 \
+  -m 512M \
+  -cdrom DoomLinux.iso \
+  -boot d \
+  -vga std
 ```
+
+---
 
 ## Testing
-Run `make test-smoke` to execute a fast functional check. It drives `DoomLinux.sh` in smoke mode (no downloads or compilation) and verifies that core artifacts are scaffolded.
 
-Behavior-driven regression coverage lives under `tests/features/`. Install Python 3 and run `make test-bdd` (which installs `behave` locally if needed) to execute the scenarios.
+* **Smoke test**:
 
-For boot validation, run `make test-qemu` (requires `qemu-system-x86_64`) to launch the generated ISO headlessly and confirm kernel startup logs. Use `make test-vagrant` to run the same check inside a disposable Vagrant Docker guest—handy for reproducing matrix failures locally. Both commands expect `DoomLinux.iso` to already exist; invoke `make test-integration` to execute them back-to-back.
+  ```bash
+  DOOMLINUX_TEST_MODE=smoke ./DoomLinux.sh
+  ```
 
-Generate code coverage with `make coverage-report`. The helper script installs coverage.py on demand, re-runs the behave suite under instrumentation, and stores human-readable (`coverage.txt`) and machine-readable (`coverage.xml`) outputs in `tests/artifacts/` for upload.
+* **Behavior-driven tests**:
+
+  ```bash
+  make test-bdd
+  ```
+
+* **Boot validation**:
+
+  ```bash
+  make test-qemu
+  make test-vagrant
+  make test-integration
+  ```
+
+---
 
 ## Linting
-Use `make lint` to run ShellCheck and shfmt. The target prefers locally installed tools and falls back to Docker images (`koalaman/shellcheck` and `mvdan/shfmt`) when they are absent.
+
+```bash
+make lint
+```
+
+Runs ShellCheck and shfmt locally or via Docker fallback.
+
+---
 
 ## Developer Tooling
-- **miso integration**: For richer ISO boot smoke tests, consider layering the [miso](https://github.com/ByteHackr/miso) framework atop the QEMU scripts provided here. It meshes well with the generated ISO artifacts and CI workflows.
-- **Dependency bootstrap**: Run `./scripts/install-deps.sh` to install all host packages needed for building, testing, and integration workflows.
-- **Devcontainer**: Launch VS Code’s “Dev Containers: Open Folder in Container…” command to load the repo through `.devcontainer/devcontainer.json`. The container mirrors CI (Docker-in-Docker enabled) and runs `make lint test-smoke` after creation.
-- **VSCode launch configs**: The `.vscode/launch.json` profile wraps `make test-qemu`, while `.vscode/tasks.json` exposes quick commands for building and running smoke tests. Use them to iterate without leaving VS Code.
-- **Emoji summaries**: Smoke and QEMU checks emit emoji-enhanced tables into `tests/artifacts/*.txt`. They’re surfaced in CI logs and ready for artifact upload.
-- **CSV/LaTeX exports**: `make convert-logs` (or `./scripts/log-convert.sh`) creates `smoke-summary.csv` / `.tex` for dashboards and papers.
-- **Coverage**: `make coverage-report` (or `./scripts/coverage-report.sh`) runs behave under coverage.py, storing `coverage.txt` and `coverage.xml` in `tests/artifacts/`.
-- **Auto-docker fallback**: Running `./DoomLinux.sh` on macOS or other hosts without Linux headers automatically delegates the heavy lifting to the bundled Docker builder (`docker/Dockerfile.ubuntu`). Ensure Docker is installed if you aren’t on Linux.
 
-## Log Publishing
-- Developer and CI runs drop log summaries under `tests/artifacts/`; see `tests/artifacts/smoke-summary.txt` and `tests/artifacts/qemu-summary.txt`.
-- The *Logs* GitHub workflow (`logs.yml`) executes `make test-smoke`, prints each summary in the Actions log, uploads the artifact bundle, and—when `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`AWS_S3_BUCKET` secrets are present—copies the files to `s3://$AWS_S3_BUCKET/logs/${GITHUB_RUN_ID}/` via the AWS CLI.
-- The *Reports* workflow (`reports.yml`) runs smoke, conversions, and coverage, publishing CSV/LaTeX and coverage artifacts for downstream analysis.
+* VS Code Devcontainer support
+* QEMU smoke tests
+* Emoji-enhanced CI logs
+* CSV / LaTeX report generation
+* Automatic Docker fallback for non-Linux hosts
+
+---
 
 ## TrenchBroom
-TrenchBroom is not bundled, but a text file inside the generated root filesystem (`/root/TRENCHBROOM-INSTALL.txt`) explains how to download and run the editor on a workstation and how to bring new WAD files into DoomLinux before rebuilding the ISO.
+
+TrenchBroom is not bundled. Instructions are written to:
+
+```
+/root/TRENCHBROOM-INSTALL.txt
+```
+
+inside the generated root filesystem.
+
+---
 
 ## DoomLinux in Action
+
 [![DoomLinux](https://img.youtube.com/vi/VaALEKWQOpg/0.jpg)](https://www.youtube.com/watch?v=VaALEKWQOpg)
 
+---
+
 ## Disclaimer
-This project is made just for those who wants to learn how basic linux systems works. Under no circumstances shall the author be liable for any damage.
 
-## Licence 
-Licensed under the MIT License.
+This project is intended for educational purposes only. The author assumes no liability for misuse or damage.
 
+---
+
+## License
+
+MIT License
