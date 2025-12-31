@@ -241,6 +241,7 @@ Runs ShellCheck and shfmt locally or via Docker fallback.
 * Emoji-enhanced CI logs
 * CSV / LaTeX report generation
 * Automatic Docker fallback for non-Linux hosts
+* DoomLinux supports miso integration for richer ISO boot smoke tests.
 
 ---
 
