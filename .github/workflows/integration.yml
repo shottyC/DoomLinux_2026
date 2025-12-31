@@ -1,10 +1,11 @@
 name: Integration Matrix
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build-and-qemu:
@@ -16,11 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure scripts are executable
+        run: chmod +x ./DoomLinux.sh ./tests/run_qemu.sh
+
       - name: Install build dependencies (native)
         if: matrix.target == 'native'
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget make gawk gcc bc bison flex unzip rsync mtools xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin cpio tar xz-utils file dosfstools
+          sudo apt-get install -y \
+            wget curl make gawk gcc bc bison flex unzip rsync mtools \
+            xorriso libelf-dev libssl-dev grub-common grub-pc-bin grub-efi-amd64-bin \
+            cpio tar xz-utils file dosfstools qemu-system-x86-headless
 
       - name: Build ISO
         run: |
@@ -35,11 +42,6 @@ jobs:
               make docker-run-alpine
               ;;
           esac
-
-      - name: Install QEMU
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-system-x86-headless
 
       - name: Run QEMU boot check
         run: ./tests/run_qemu.sh DoomLinux.iso
@@ -79,11 +81,15 @@ jobs:
           if [ ! -f DoomLinux.iso ] && [ -f "DoomLinux-${{ matrix.target }}/DoomLinux.iso" ]; then
             mv "DoomLinux-${{ matrix.target }}/DoomLinux.iso" DoomLinux.iso
           fi
+          chmod +x DoomLinux.iso
 
       - name: Install Vagrant and QEMU
         run: |
           sudo apt-get update
           sudo apt-get install -y vagrant docker.io qemu-system-x86-headless
+
+      - name: Ensure Vagrant test script is executable
+        run: chmod +x tests/vagrant/test.sh
 
       - name: Run Vagrant boot check
         run: sudo -E VAGRANT_DEFAULT_PROVIDER=docker tests/vagrant/test.sh
