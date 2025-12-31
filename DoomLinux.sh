@@ -8,7 +8,6 @@ set -eu
 KERNEL_VERSION=6.6.119
 BUSYBOX_VERSION=1.35.0
 
-
 SOURCE_DIR=$PWD
 ROOTFS=$SOURCE_DIR/rootfs
 STAGING=$SOURCE_DIR/staging
@@ -17,58 +16,58 @@ ISO_DIR=$SOURCE_DIR/iso
 mkdir -p "$ROOTFS/bin" "$STAGING" "$ISO_DIR/boot"
 
 log_step() {
-	printf '%s %s\n' "$1" "$2"
+    printf '%s %s\n' "$1" "$2"
 }
 
 if [ "${DOOMLINUX_IN_DOCKER:-0}" != "1" ]; then
-	need_docker=0
-	case "$(uname -s)" in
-	Linux)
-		if [ ! -f /usr/include/linux/fb.h ]; then
-			need_docker=1
-		fi
-		;;
-	*)
-		need_docker=1
-		;;
-	esac
-	if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
-		need_docker=0
-	fi
-	if [ "$need_docker" -eq 1 ]; then
-		if ! command -v docker >/dev/null 2>&1; then
-			echo "Docker is required to build this ISO on non-Linux hosts." >&2
-			exit 1
-		fi
-		log_step "🐳" "Delegating build to Docker (linux/amd64)"
-		docker build --platform linux/amd64 -f docker/Dockerfile.ubuntu -t doomlinux:ubuntu .
-		docker run --rm --platform linux/amd64 -e DOOMLINUX_IN_DOCKER=1 -v "$SOURCE_DIR":/workspace -w /workspace doomlinux:ubuntu ./DoomLinux.sh
-		exit $?
-	fi
+    need_docker=0
+    case "$(uname -s)" in
+    Linux)
+        if [ ! -f /usr/include/linux/fb.h ]; then
+            need_docker=1
+        fi
+        ;;
+    *)
+        need_docker=1
+        ;;
+    esac
+    if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
+        need_docker=0
+    fi
+    if [ "$need_docker" -eq 1 ]; then
+        if ! command -v docker >/dev/null 2>&1; then
+            echo "Docker is required to build this ISO on non-Linux hosts." >&2
+            exit 1
+        fi
+        log_step "🐳" "Delegating build to Docker (linux/amd64)"
+        docker build --platform linux/amd64 -f docker/Dockerfile.ubuntu -t doomlinux:ubuntu .
+        docker run --rm --platform linux/amd64 -e DOOMLINUX_IN_DOCKER=1 -v "$SOURCE_DIR":/workspace -w /workspace doomlinux:ubuntu ./DoomLinux.sh
+        exit $?
+    fi
 fi
 
 download() {
-	url="$1"
-	dest="$2"
-	if [ -f "$dest" ]; then
-		printf "⚙️  Using cached %s\n" "$(basename "$dest")"
-		return
-	fi
-	printf "⬇️  Fetching %s -> %s\n" "$url" "$dest"
-	if command -v curl >/dev/null 2>&1; then
-		curl -L --retry 5 --retry-delay 5 -o "$dest" "$url"
-	else
-		wget --tries=5 --timeout=30 -O "$dest" "$url"
-	fi
-	if [ ! -f "$dest" ]; then
-		echo "Failed to download $url" >&2
-		exit 1
-	fi
-	printf "✅ Saved %s\n" "$(basename "$dest")"
+    url="$1"
+    dest="$2"
+    if [ -f "$dest" ]; then
+        printf "⚙️  Using cached %s\n" "$(basename "$dest")"
+        return
+    fi
+    printf "⬇️  Fetching %s -> %s\n" "$url" "$dest"
+    if command -v curl >/dev/null 2>&1; then
+        curl -L --retry 5 --retry-delay 5 -o "$dest" "$url"
+    else
+        wget --tries=5 --timeout=30 -O "$dest" "$url"
+    fi
+    if [ ! -f "$dest" ]; then
+        echo "Failed to download $url" >&2
+        exit 1
+    fi
+    printf "✅ Saved %s\n" "$(basename "$dest")"
 }
 
 write_trenchbroom_instructions() {
-	cat >"$ROOTFS/root/TRENCHBROOM-INSTALL.txt" <<'EOF'
+    cat >"$ROOTFS/root/TRENCHBROOM-INSTALL.txt" <<'EOF'
 TrenchBroom is not bundled with DoomLinux.
 
 Install on a workstation with desktop support:
@@ -81,7 +80,7 @@ EOF
 }
 
 write_init_script() {
-cat >"$ROOTFS/init" <<'EOF'
+    cat >"$ROOTFS/init" <<'EOF'
 #!/bin/sh
 
 /bin/busybox --install -s /bin
@@ -103,11 +102,11 @@ fi
 
 exec /bin/fbdoom -iwad /bin/doom1.wad
 EOF
-chmod +x "$ROOTFS/init"
+    chmod +x "$ROOTFS/init"
 }
 
 write_grub_config() {
-	cat >"$ISO_DIR/boot/grub/grub.cfg" <<'EOF'
+    cat >"$ISO_DIR/boot/grub/grub.cfg" <<'EOF'
 set default=0
 set timeout=30
 
@@ -130,26 +129,26 @@ EOF
 }
 
 if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
-	log_step "🧪" "Running smoke mode"
-	mkdir -p "$ROOTFS/bin" "$ROOTFS/dev" "$ROOTFS/mnt" "$ROOTFS/proc" "$ROOTFS/sys" "$ROOTFS/tmp" "$ROOTFS/root" "$ROOTFS/etc"
-	mkdir -p "$ISO_DIR/boot/grub"
-	write_trenchbroom_instructions
-	write_init_script
-	write_grub_config
-	touch "$ROOTFS/bin/fbdoom" "$ROOTFS/bin/doom1.wad" "$ISO_DIR/boot/bzImage" "$ISO_DIR/boot/rootfs.gz" "$ISO_DIR/boot/System.map"
-	printf 'placeholder iso\n' >"$SOURCE_DIR/DoomLinux.iso"
-	LOG_DIR="$SOURCE_DIR/tests/artifacts"
-	mkdir -p "$LOG_DIR"
-	SMOKE_SUMMARY="$LOG_DIR/smoke-summary.txt"
-	cat <<TABLE | tee "$SMOKE_SUMMARY"
+    log_step "🧪" "Running smoke mode"
+    mkdir -p "$ROOTFS/bin" "$ROOTFS/dev" "$ROOTFS/mnt" "$ROOTFS/proc" "$ROOTFS/sys" "$ROOTFS/tmp" "$ROOTFS/root" "$ROOTFS/etc"
+    mkdir -p "$ISO_DIR/boot/grub"
+    write_trenchbroom_instructions
+    write_init_script
+    write_grub_config
+    touch "$ROOTFS/bin/fbdoom" "$ROOTFS/bin/doom1.wad" "$ISO_DIR/boot/bzImage" "$ISO_DIR/boot/rootfs.gz" "$ISO_DIR/boot/System.map"
+    printf 'placeholder iso\n' >"$SOURCE_DIR/DoomLinux.iso"
+    LOG_DIR="$SOURCE_DIR/tests/artifacts"
+    mkdir -p "$LOG_DIR"
+    SMOKE_SUMMARY="$LOG_DIR/smoke-summary.txt"
+    cat <<TABLE | tee "$SMOKE_SUMMARY"
 ┌────────────┬───────────────────────────────────────────────┐
 │ ✅ Status  │ Smoke scaffolding checks passed               │
 │ 📦 Artifact│ placeholder DoomLinux.iso generated           │
 │ ✨ Note    │ Logs preserved in tests/artifacts for upload  │
 └────────────┴───────────────────────────────────────────────┘
 TABLE
-	printf '📄 Smoke summary saved to %s\n' "$SMOKE_SUMMARY"
-	exit 0
+    printf '📄 Smoke summary saved to %s\n' "$SMOKE_SUMMARY"
+    exit 0
 fi
 
 log_step "🏁" "Starting DoomLinux build"
@@ -166,14 +165,14 @@ log_step "🧹" "Preserving extracted source directories (temporary cache)"
 
 log_step "🗂️" "Extracting sources"
 if [ ! -d "linux-${KERNEL_VERSION}" ]; then
-	tar -xf kernel.tar.xz
+    tar -xf kernel.tar.xz
 else
-	log_step "♻️" "Reusing existing linux-${KERNEL_VERSION} tree"
+    log_step "♻️" "Reusing existing linux-${KERNEL_VERSION} tree"
 fi
 if [ ! -d fbDOOM-master ]; then
-	unzip -q fbDOOM-master.zip
+    unzip -q fbDOOM-master.zip
 else
-	log_step "♻️" "Reusing existing fbDOOM-master tree"
+    log_step "♻️" "Reusing existing fbDOOM-master tree"
 fi
 
 log_step "📦" "Installing BusyBox"
@@ -259,11 +258,11 @@ yes "" | make oldconfig >/dev/null 2>&1
 
 KERNEL_CC="${KERNEL_CC:-}"
 if [ -z "$KERNEL_CC" ]; then
-	if command -v gcc >/dev/null 2>&1; then
-		KERNEL_CC="gcc -no-pie"
-	else
-		KERNEL_CC="${CC:-cc}"
-	fi
+    if command -v gcc >/dev/null 2>&1; then
+        KERNEL_CC="gcc -no-pie"
+    else
+        KERNEL_CC="${CC:-cc}"
+    fi
 fi
 
 log_step "🧱" "Building Linux kernel"
