@@ -2,8 +2,12 @@
 
 set -eu
 
-KERNEL_VERSION=5.4.3
+###############################################################################
+# Versions
+###############################################################################
+KERNEL_VERSION=6.6.119
 BUSYBOX_VERSION=1.35.0
+
 
 SOURCE_DIR=$PWD
 ROOTFS=$SOURCE_DIR/rootfs
@@ -77,18 +81,29 @@ EOF
 }
 
 write_init_script() {
-	cat >"$ROOTFS/init" <<'EOF'
+cat >"$ROOTFS/init" <<'EOF'
 #!/bin/sh
-busybox --install -s /bin
-dmesg -n 1
-mount -t devtmpfs none /dev
-mount -t proc none /proc
-mount -t sysfs none /sys
-fbdoom -iwad /bin/doom1.wad
-clear
-setsid cttyhack /bin/sh
+
+/bin/busybox --install -s /bin
+
+mount -t devtmpfs devtmpfs /dev
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+
+echo "Waiting for framebuffer..."
+for i in $(seq 1 50); do
+    [ -e /dev/fb0 ] && break
+    sleep 0.1
+done
+
+if [ ! -e /dev/fb0 ]; then
+    echo "Framebuffer not found. Dropping to shell..."
+    exec setsid cttyhack /bin/sh
+fi
+
+exec /bin/fbdoom -iwad /bin/doom1.wad
 EOF
-	chmod +x "$ROOTFS/init"
+chmod +x "$ROOTFS/init"
 }
 
 write_grub_config() {
@@ -103,9 +118,14 @@ set menu_color_highlight=white/green
 root (hd0,0)
 
 menuentry "DoomLinux" {
-    linux  /boot/bzImage
+    linux /boot/bzImage \
+        root=/dev/ram0 \
+        rdinit=/init \
+        console=tty0 \
+        quiet
     initrd /boot/rootfs.gz
 }
+
 EOF
 }
 
@@ -123,9 +143,9 @@ if [ "${DOOMLINUX_TEST_MODE:-}" = "smoke" ]; then
 	SMOKE_SUMMARY="$LOG_DIR/smoke-summary.txt"
 	cat <<TABLE | tee "$SMOKE_SUMMARY"
 ┌────────────┬───────────────────────────────────────────────┐
-│ ✅ Status  │ Smoke scaffolding checks passed                │
+│ ✅ Status  │ Smoke scaffolding checks passed               │
 │ 📦 Artifact│ placeholder DoomLinux.iso generated           │
-│ ✨ Note    │ Logs preserved in tests/artifacts for upload   │
+│ ✨ Note    │ Logs preserved in tests/artifacts for upload  │
 └────────────┴───────────────────────────────────────────────┘
 TABLE
 	printf '📄 Smoke summary saved to %s\n' "$SMOKE_SUMMARY"
@@ -136,7 +156,7 @@ log_step "🏁" "Starting DoomLinux build"
 cd "$STAGING"
 
 log_step "📥" "Downloading source archives"
-download "https://kernel.org/pub/linux/kernel/v5.x/linux-${KERNEL_VERSION}.tar.xz" kernel.tar.xz
+download "https://kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" kernel.tar.xz
 download "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip" fbDOOM-master.zip
 download "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" doom1.wad
 download "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" busybox-static
@@ -158,6 +178,7 @@ fi
 
 log_step "📦" "Installing BusyBox"
 install -m 0755 "$STAGING/busybox-static" "$ROOTFS/bin/busybox"
+ln -s /bin/busybox "$ROOTFS/bin/sh"
 rm -f "$ROOTFS/bin/linuxrc"
 rm -f "$STAGING/busybox-static"
 log_step "🛎️" "BusyBox symlinks will be installed at runtime via init"
@@ -184,7 +205,7 @@ write_trenchbroom_instructions
 write_init_script
 
 log_step "🗜️" "Packing root filesystem"
-find . | cpio -R root:root -H newc -o --quiet | gzip >"$ISO_DIR/boot/rootfs.gz"
+find . -mindepth 1 | cpio -R root:root -H newc -o | gzip >"$ISO_DIR/boot/rootfs.gz"
 log_step "📦" "rootfs archive ready"
 
 log_step "🧵" "Configuring Linux kernel"
@@ -220,6 +241,18 @@ set_opt("CONFIG_CC_OPTIMIZE_FOR_SIZE", "y")
 set_opt("CONFIG_KERNEL_GZIP", "n")
 set_opt("CONFIG_DEFAULT_HOSTNAME", '"DoomLinux"')
 set_opt("CONFIG_DRM_BOCHS", "y")
+set_opt("CONFIG_FB", "y")
+set_opt("CONFIG_FB_SIMPLE", "y")
+set_opt("CONFIG_FB_VESA", "y")
+set_opt("CONFIG_FB_DEV", "y")
+set_opt("CONFIG_FB_DEV_EMULATION", "y")
+set_opt("CONFIG_FRAMEBUFFER_CONSOLE", "y")
+set_opt("CONFIG_DRM", "y")
+set_opt("CONFIG_DRM_VIRTIO_GPU", "y")
+set_opt("CONFIG_DRM_VIRTIO", "y")
+set_opt("CONFIG_DRM_VIRTIO_PCI", "y")
+set_opt("CONFIG_DRM_FBDEV_EMULATION", "y")
+
 cfg.write_text(text)
 PY
 yes "" | make oldconfig >/dev/null 2>&1
