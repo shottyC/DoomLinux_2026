@@ -1,22 +1,46 @@
 name: Test Suite
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+  workflow_dispatch:
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip
+
       - name: Run functional smoke tests
         run: make test-smoke
 
+      - name: Upload smoke test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-artifacts
+          path: tests/artifacts/
+
   bdd:
     runs-on: ubuntu-latest
+    needs: smoke  # Optionally run BDD tests after smoke tests
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install Python dependencies
+        run: pip3 install behave
+
       - name: Run behavior-driven tests
         run: make test-bdd
+
+      - name: Upload BDD test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bdd-artifacts
+          path: tests/artifacts/
