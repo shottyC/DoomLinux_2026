@@ -7,11 +7,6 @@ on:
 #    branches: [main]
   workflow_dispatch:
 
-name: Test Suite
-
-on:
-  workflow_dispatch:
-
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -53,13 +48,15 @@ jobs:
         run: chmod +x DoomLinux.sh
 
       - name: Install Python dependencies
-        run: pip3 install behave
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install behave
 
       - name: Create artifact directories
         run: mkdir -p tests/artifacts
 
       - name: Run behavior-driven tests
-        run: make test-bdd
+        run: python3 -m behave tests/features
 
       - name: Upload BDD test artifacts
         uses: actions/upload-artifact@v4
