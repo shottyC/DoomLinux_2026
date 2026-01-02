@@ -5,7 +5,6 @@ from pathlib import Path
 
 from behave import given, then, when
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 ARTIFACTS = [
@@ -46,9 +45,7 @@ def step_iso_exists(context):
 
 @then("the TrenchBroom instructions are available")
 def step_trenchbroom_exists(context):
-    instructions = (
-        REPO_ROOT / "rootfs" / "root" / "TRENCHBROOM-INSTALL.txt"
-    )
+    instructions = REPO_ROOT / "rootfs" / "root" / "TRENCHBROOM-INSTALL.txt"
     assert instructions.is_file()
     content = instructions.read_text()
     assert "TrenchBroom" in content
@@ -86,10 +83,7 @@ def step_devcontainer(context):
     assert dockerfile.is_file(), "Devcontainer Dockerfile missing"
 
     data = json.loads(config.read_text())
-
-    assert data.get("dockerFile") == "Dockerfile", (
-        "devcontainer should reference Dockerfile"
-    )
+    assert data.get("dockerFile") == "Dockerfile", "devcontainer should reference Dockerfile"
     assert "postCreateCommand" in data, "devcontainer postCreateCommand missing"
 
 
@@ -103,11 +97,8 @@ def step_vscode_launch(context):
 
     launch_data = json.loads(launch.read_text())
     configs = launch_data.get("configurations", [])
-
     assert configs, "launch.json configurations missing"
-    assert configs[0].get("preLaunchTask") == "Build ISO", (
-        "preLaunchTask should be Build ISO"
-    )
+    assert configs[0].get("preLaunchTask") == "Build ISO", "preLaunchTask should be Build ISO"
 
 
 @then("the README references miso usage")
@@ -122,9 +113,7 @@ def step_smoke_summary(context):
     assert summary.is_file(), "Smoke summary log missing"
 
     content = summary.read_text()
-    assert "✅" in content and "✨" in content, (
-        "Smoke summary should contain celebratory emojis"
-    )
+    assert "✅" in content and "✨" in content, "Smoke summary should contain celebratory emojis"
 
 
 @when("I convert the log summaries")
@@ -139,7 +128,6 @@ def step_convert_logs(context):
 @then("CSV and LaTeX summaries exist")
 def step_csv_tex_outputs(context):
     base = REPO_ROOT / "tests" / "artifacts"
-
     smoke_csv = base / "smoke-summary.csv"
     smoke_tex = base / "smoke-summary.tex"
 
