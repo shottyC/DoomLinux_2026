@@ -1,9 +1,9 @@
-from pathlib import Path
 import json
 import shutil
 import subprocess
+from pathlib import Path
 
-from behave import given, when, then
+from behave import given, then, when
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -32,11 +32,7 @@ def step_clean_workspace(context):
 @when("I run DoomLinux in smoke mode")
 def step_run_smoke_build(context):
     subprocess.run(
-        [
-            "bash",
-            "-lc",
-            "DOOMLINUX_TEST_MODE=smoke ./DoomLinux.sh",
-        ],
+        ["bash", "-lc", "DOOMLINUX_TEST_MODE=smoke ./DoomLinux.sh"],
         cwd=REPO_ROOT,
         check=True,
     )
@@ -51,10 +47,7 @@ def step_iso_exists(context):
 @then("the TrenchBroom instructions are available")
 def step_trenchbroom_exists(context):
     instructions = (
-        REPO_ROOT
-        / "rootfs"
-        / "root"
-        / "TRENCHBROOM-INSTALL.txt"
+        REPO_ROOT / "rootfs" / "root" / "TRENCHBROOM-INSTALL.txt"
     )
     assert instructions.is_file()
     content = instructions.read_text()
@@ -63,16 +56,7 @@ def step_trenchbroom_exists(context):
 
 @then("the root filesystem directories are scaffolded")
 def step_rootfs_dirs(context):
-    required = [
-        "bin",
-        "dev",
-        "mnt",
-        "proc",
-        "sys",
-        "tmp",
-        "root",
-        "etc",
-    ]
+    required = ["bin", "dev", "mnt", "proc", "sys", "tmp", "root", "etc"]
     for name in required:
         path = REPO_ROOT / "rootfs" / name
         assert path.is_dir(), f"Expected directory missing: {path}"
@@ -80,13 +64,7 @@ def step_rootfs_dirs(context):
 
 @then("the GRUB configuration references DoomLinux")
 def step_grub_config(context):
-    grub_cfg = (
-        REPO_ROOT
-        / "iso"
-        / "boot"
-        / "grub"
-        / "grub.cfg"
-    )
+    grub_cfg = REPO_ROOT / "iso" / "boot" / "grub" / "grub.cfg"
     assert grub_cfg.is_file()
     assert 'menuentry "DoomLinux"' in grub_cfg.read_text()
 
@@ -95,9 +73,7 @@ def step_grub_config(context):
 def step_install_script(context):
     script = REPO_ROOT / "scripts" / "install-deps.sh"
     assert script.is_file(), "install-deps.sh not found"
-    assert script.stat().st_mode & 0o111, (
-        "install-deps.sh is not executable"
-    )
+    assert script.stat().st_mode & 0o111, "install-deps.sh is not executable"
 
 
 @then("the devcontainer configuration is available")
@@ -114,9 +90,7 @@ def step_devcontainer(context):
     assert data.get("dockerFile") == "Dockerfile", (
         "devcontainer should reference Dockerfile"
     )
-    assert "postCreateCommand" in data, (
-        "devcontainer postCreateCommand missing"
-    )
+    assert "postCreateCommand" in data, "devcontainer postCreateCommand missing"
 
 
 @then("the VSCode launch configuration is available")
@@ -139,19 +113,12 @@ def step_vscode_launch(context):
 @then("the README references miso usage")
 def step_readme_miso(context):
     readme = REPO_ROOT / "README.md"
-    assert "miso" in readme.read_text().lower(), (
-        "README should mention miso"
-    )
+    assert "miso" in readme.read_text().lower(), "README should mention miso"
 
 
 @then("the smoke summary log is emoji rich")
 def step_smoke_summary(context):
-    summary = (
-        REPO_ROOT
-        / "tests"
-        / "artifacts"
-        / "smoke-summary.txt"
-    )
+    summary = REPO_ROOT / "tests" / "artifacts" / "smoke-summary.txt"
     assert summary.is_file(), "Smoke summary log missing"
 
     content = summary.read_text()
@@ -163,11 +130,7 @@ def step_smoke_summary(context):
 @when("I convert the log summaries")
 def step_convert_logs(context):
     subprocess.run(
-        [
-            "bash",
-            "-lc",
-            "./scripts/log-convert.sh",
-        ],
+        ["bash", "-lc", "./scripts/log-convert.sh"],
         cwd=REPO_ROOT,
         check=True,
     )
@@ -187,11 +150,7 @@ def step_csv_tex_outputs(context):
 @then("the log lint passes")
 def step_log_lint(context):
     subprocess.run(
-        [
-            "bash",
-            "-lc",
-            "./scripts/log-lint.sh",
-        ],
+        ["bash", "-lc", "./scripts/log-lint.sh"],
         cwd=REPO_ROOT,
         check=True,
     )
