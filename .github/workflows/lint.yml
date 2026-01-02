@@ -42,8 +42,8 @@ jobs:
       - name: Lint Python code
         run: |
           flake8 .
-          black --check .
-          isort --check-only .
+          black --check --config pyproject.toml .
+          isort --check-only --settings-path pyproject.toml .
 
       # 7️⃣ Optional: Run Makefile lint (if you keep your existing targets)
       - name: Run Makefile lint targets
