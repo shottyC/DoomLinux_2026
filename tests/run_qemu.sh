@@ -4,8 +4,8 @@ set -euo pipefail
 
 ISO_PATH=${1:-DoomLinux.iso}
 if [ ! -f "$ISO_PATH" ]; then
-	echo "ISO not found: $ISO_PATH" >&2
-	exit 1
+    echo "ISO not found: $ISO_PATH" >&2
+    exit 1
 fi
 
 LOG_PATH=${QEMU_LOG:-tests/artifacts/qemu.log}
@@ -27,15 +27,15 @@ status=$?
 set -e
 
 if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then
-	echo "QEMU exited with status $status"
-	cat "$LOG_PATH" || true
-	exit "$status"
+    echo "QEMU exited with status $status"
+    cat "$LOG_PATH" || true
+    exit "$status"
 fi
 
 if ! grep -qi "Linux version" "$LOG_PATH"; then
-	echo "Kernel boot signature not detected in QEMU log"
-	cat "$LOG_PATH" || true
-	exit 1
+    echo "Kernel boot signature not detected in QEMU log"
+    cat "$LOG_PATH" || true
+    exit 1
 fi
 
 cat <<TABLE | tee "$SUMMARY_PATH"
