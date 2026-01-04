@@ -1,10 +1,6 @@
 name: Reports
 
 on:
-#  push:
-#    branches: [main]
-#  pull_request:
-#    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -16,23 +12,35 @@ jobs:
       image: doomlinux-devcontainer:latest
 
     steps:
+      # 1️⃣ Checkout repository
       - uses: actions/checkout@v4
 
+      # 2️⃣ Ensure artifact directory ALWAYS exists
+      - name: Prepare artifacts directory
+        run: |
+          mkdir -p tests/artifacts
+
+      # 3️⃣ Run smoke tests (may fail, but we still want reports)
       - name: Run smoke tests
         run: make test-smoke
 
+      # 4️⃣ Convert summaries (guarded by directory existence)
       - name: Convert summaries to CSV/LaTeX
         run: ./scripts/log-convert.sh
 
+      # 5️⃣ Lint log artifacts
       - name: Lint log artifacts
         run: ./scripts/log-lint.sh
 
+      # 6️⃣ Generate coverage reports
       - name: Generate coverage reports
         run: ./scripts/coverage-report.sh
 
+      # 7️⃣ Upload reports and coverage artifacts (never null)
       - name: Upload reports and coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reports-and-coverage
-          path: tests/artifacts/
+          path: |
+            tests/artifacts
