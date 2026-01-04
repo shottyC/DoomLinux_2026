@@ -7,40 +7,62 @@ jobs:
   reports:
     runs-on: ubuntu-latest
 
-    # Run inside the DoomLinux devcontainer image
-    container:
-      image: doomlinux-devcontainer:latest
-
     steps:
       # 1️⃣ Checkout repository
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # 2️⃣ Ensure artifact directory ALWAYS exists
+      # 2️⃣ Ensure artifacts directory exists on host
       - name: Prepare artifacts directory
+        run: mkdir -p tests/artifacts
+
+      # 3️⃣ Build the DoomLinux devcontainer image
+      - name: Build devcontainer image
         run: |
-          mkdir -p tests/artifacts
+          docker build \
+            -t doomlinux-devcontainer:latest \
+            .devcontainer
 
-      # 3️⃣ Run smoke tests (may fail, but we still want reports)
+      # 4️⃣ Run smoke tests inside the container
       - name: Run smoke tests
-        run: make test-smoke
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            doomlinux-devcontainer:latest \
+            make test-smoke
 
-      # 4️⃣ Convert summaries (guarded by directory existence)
-      - name: Convert summaries to CSV/LaTeX
-        run: ./scripts/log-convert.sh
+      # 5️⃣ Convert summaries to CSV/LaTeX
+      - name: Convert summaries
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            doomlinux-devcontainer:latest \
+            ./scripts/log-convert.sh
 
-      # 5️⃣ Lint log artifacts
+      # 6️⃣ Lint log artifacts
       - name: Lint log artifacts
-        run: ./scripts/log-lint.sh
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            doomlinux-devcontainer:latest \
+            ./scripts/log-lint.sh
 
-      # 6️⃣ Generate coverage reports
+      # 7️⃣ Generate coverage reports
       - name: Generate coverage reports
-        run: ./scripts/coverage-report.sh
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            doomlinux-devcontainer:latest \
+            ./scripts/coverage-report.sh
 
-      # 7️⃣ Upload reports and coverage artifacts (never null)
+      # 8️⃣ Upload reports and coverage artifacts (always runs)
       - name: Upload reports and coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: reports-and-coverage
-          path: |
-            tests/artifacts
+          path: tests/artifacts
