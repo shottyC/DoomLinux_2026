@@ -10,7 +10,7 @@ fi
 
 LOG_PATH=${QEMU_LOG:-tests/artifacts/qemu.log}
 QEMU_TIMEOUT=${QEMU_TIMEOUT:-90}
-QEMU_ARGS=${QEMU_ARGS:--m 512 -smp 1 -nographic -serial mon:stdio -no-reboot -no-shutdown}
+QEMU_ARGS=${QEMU_ARGS:--m 512M -vga std}
 SUMMARY_PATH=${QEMU_SUMMARY:-tests/artifacts/qemu-summary.txt}
 
 # shellcheck disable=SC2206
