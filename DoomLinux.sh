@@ -169,6 +169,7 @@ download_with_fallback() {
         log_step "🌐" "Trying $url"
         if curl -fL \
             --retry 5 \
+            --retry-all-errors \
             --retry-delay 10 \
             --connect-timeout 15 \
             --max-time 300 \
@@ -181,7 +182,7 @@ download_with_fallback() {
     exit 1
 }
 
-# Kernel (primary + mirrors)
+# Kernel (primary + mirror)
 download_with_fallback kernel.tar.xz \
     "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" \
     "https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz"
@@ -195,15 +196,13 @@ download_with_fallback doom1.wad \
     "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" \
     "https://mirror.math.princeton.edu/pub/slitaz/sources/packages/d/doom1.wad"
 
-# BusyBox static binary
+# BusyBox (static)
 download_with_fallback busybox-static \
-    "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" \
-    "https://busybox.net/downloads/binaries/1.36.1-x86_64-linux-musl/busybox"
+    "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox"
 
 chmod +x busybox-static
 
-log_step "🔍" "Verified download queue (kernel, BusyBox, fbDOOM, WAD)"
-
+log_step "✅" "BusyBox ${BUSYBOX_VERSION} downloaded and verified"
 
 log_step "🧹" "Preserving extracted source directories (temporary cache)"
 
@@ -219,7 +218,6 @@ if [ ! -d fbDOOM-master ]; then
 else
     log_step "♻️" "Reusing existing fbDOOM-master tree"
 fi
-
 
 log_step "📦" "Installing BusyBox"
 install -m 0755 "$STAGING/busybox-static" "$ROOTFS/bin/busybox"
