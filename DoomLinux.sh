@@ -171,7 +171,7 @@ download_with_fallback() {
             --retry 5 \
             --retry-all-errors \
             --retry-delay 10 \
-            --connect-timeout 15 \
+            --connect-timeout 30 \
             --max-time 300 \
             "$url" -o "$output"; then
             return 0
