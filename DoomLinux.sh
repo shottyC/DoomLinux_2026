@@ -154,12 +154,56 @@ fi
 log_step "🏁" "Starting DoomLinux build"
 cd "$STAGING"
 
-log_step "📥" "Downloading source archives"
-download "https://kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" kernel.tar.xz
-download "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip" fbDOOM-master.zip
-download "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" doom1.wad
-download "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" busybox-static
+log_step "📥" "Downloading source archives (with mirrors & retries)"
+
+download_with_fallback() {
+    output="$1"
+    shift
+
+    if [ -f "$output" ]; then
+        log_step "♻️" "Reusing cached $output"
+        return 0
+    fi
+
+    for url in "$@"; do
+        log_step "🌐" "Trying $url"
+        if curl -fL \
+            --retry 5 \
+            --retry-delay 10 \
+            --connect-timeout 15 \
+            --max-time 300 \
+            "$url" -o "$output"; then
+            return 0
+        fi
+    done
+
+    echo "❌ Failed to download $output from all mirrors" >&2
+    exit 1
+}
+
+# Kernel (primary + mirrors)
+download_with_fallback kernel.tar.xz \
+    "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz" \
+    "https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-${KERNEL_VERSION}.tar.xz"
+
+# fbDOOM
+download_with_fallback fbDOOM-master.zip \
+    "https://github.com/maximevince/fbDOOM/archive/refs/heads/master.zip"
+
+# Doom WAD (mirrors)
+download_with_fallback doom1.wad \
+    "https://distro.ibiblio.org/slitaz/sources/packages/d/doom1.wad" \
+    "https://mirror.math.princeton.edu/pub/slitaz/sources/packages/d/doom1.wad"
+
+# BusyBox static binary
+download_with_fallback busybox-static \
+    "https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}-x86_64-linux-musl/busybox" \
+    "https://busybox.net/downloads/binaries/1.36.1-x86_64-linux-musl/busybox"
+
+chmod +x busybox-static
+
 log_step "🔍" "Verified download queue (kernel, BusyBox, fbDOOM, WAD)"
+
 
 log_step "🧹" "Preserving extracted source directories (temporary cache)"
 
@@ -169,11 +213,13 @@ if [ ! -d "linux-${KERNEL_VERSION}" ]; then
 else
     log_step "♻️" "Reusing existing linux-${KERNEL_VERSION} tree"
 fi
+
 if [ ! -d fbDOOM-master ]; then
     unzip -q fbDOOM-master.zip
 else
     log_step "♻️" "Reusing existing fbDOOM-master tree"
 fi
+
 
 log_step "📦" "Installing BusyBox"
 install -m 0755 "$STAGING/busybox-static" "$ROOTFS/bin/busybox"
