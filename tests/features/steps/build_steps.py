@@ -83,7 +83,9 @@ def step_devcontainer(context):
     assert dockerfile.is_file(), "Devcontainer Dockerfile missing"
 
     data = json.loads(config.read_text())
-    assert data.get("dockerFile") == "Dockerfile", "devcontainer should reference Dockerfile"
+    assert (
+        data.get("dockerFile") == "Dockerfile"
+    ), "devcontainer should reference Dockerfile"
     assert "postCreateCommand" in data, "devcontainer postCreateCommand missing"
 
 
@@ -98,7 +100,9 @@ def step_vscode_launch(context):
     launch_data = json.loads(launch.read_text())
     configs = launch_data.get("configurations", [])
     assert configs, "launch.json configurations missing"
-    assert configs[0].get("preLaunchTask") == "Build ISO", "preLaunchTask should be Build ISO"
+    assert (
+        configs[0].get("preLaunchTask") == "Build ISO"
+    ), "preLaunchTask should be Build ISO"
 
 
 @then("the README references miso usage")
@@ -113,7 +117,9 @@ def step_smoke_summary(context):
     assert summary.is_file(), "Smoke summary log missing"
 
     content = summary.read_text()
-    assert "✅" in content and "✨" in content, "Smoke summary should contain celebratory emojis"
+    assert (
+        "✅" in content and "✨" in content
+    ), "Smoke summary should contain celebratory emojis"
 
 
 @when("I convert the log summaries")
