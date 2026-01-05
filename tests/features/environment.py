@@ -1,5 +1,5 @@
-import shutil
 from pathlib import Path
+import shutil
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
