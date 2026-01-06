@@ -72,7 +72,7 @@ TrenchBroom is not bundled with DoomLinux.
 
 Install on a workstation with desktop support:
   1. Download the latest TrenchBroom release from https://github.com/TrenchBroom/TrenchBroom/releases
-  2. Make the AppImage executable: chmod +x TrenchBroom-*.AppImage
+  2. Make the AppImage execu	table: chmod +x TrenchBroom-*.AppImage
   3. Launch it: ./TrenchBroom-*.AppImage
 
 Export WAD files into this ISO by copying them into /bin/ inside the DoomLinux root filesystem before building, or mount the rootfs after boot and transfer over serial/USB.
@@ -110,18 +110,19 @@ write_grub_config() {
 set default=0
 set timeout=30
 
-# Menu Colours
+# Menu colours
 set menu_color_normal=white/black
 set menu_color_highlight=white/green
 
-root (hd0,0)
-
 menuentry "DoomLinux" {
+    search --set=root --file /boot/bzImage
+
     linux /boot/bzImage \
         root=/dev/ram0 \
         rdinit=/init \
         console=tty0 \
         quiet
+
     initrd /boot/rootfs.gz
 }
 
