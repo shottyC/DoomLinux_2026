@@ -108,7 +108,8 @@ EOF
 write_grub_config() {
     cat >"$ISO_DIR/boot/grub/grub.cfg" <<'EOF'
 set default=0
-set timeout=30
+set timeout=0
+set timeout_style=hidden
 
 # Menu colours
 set menu_color_normal=white/black
