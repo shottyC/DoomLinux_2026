@@ -10,7 +10,7 @@ fi
 LOG_PATH=${QEMU_LOG:-tests/artifacts/qemu.log}
 SUMMARY_PATH=${QEMU_SUMMARY:-tests/artifacts/qemu-summary.txt}
 QEMU_TIMEOUT=${QEMU_TIMEOUT:-90}
-QEMU_ARGS=${QEMU_ARGS:--m 512M -vga std}
+QEMU_ARGS=${QEMU_ARGS:--m 512M -serial mon:stdio}
 
 # Convert QEMU_ARGS string to array
 # shellcheck disable=SC2206
