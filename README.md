@@ -57,7 +57,7 @@ It intentionally avoids:
 5. **Builds a custom Linux kernel**
 
    * Framebuffer + DRM support for QEMU
-   * Networking, sound, EFI disabled
+   * Networking, sound, EFI no longer disabled
    * Optimized for size
 
 6. **Packages everything**
