@@ -90,7 +90,7 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 
 echo "Waiting for framebuffer..."
-for i in $(seq 1 50); do
+for i in $(seq 1 150); do
     [ -e /dev/fb0 ] && break
     sleep 0.1
 done
@@ -277,8 +277,9 @@ set_opt("CONFIG_UNWINDER_FRAME_POINTER", "y")
 set_opt("CONFIG_RANDOMIZE_BASE", "n")
 set_opt("CONFIG_NET", "n")
 set_opt("CONFIG_SOUND", "n")
-set_opt("CONFIG_EFI", "n")
-set_opt("CONFIG_EFI_STUB", "n")
+set_opt("CONFIG_EFI", "y")
+set_opt("CONFIG_EFI_STUB", "y")
+set_opt("CONFIG_EFI_MIXED", "y")
 set_opt("CONFIG_DEBUG_KERNEL", "n")
 set_opt("CONFIG_KERNEL_XZ", "y")
 set_opt("CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE", "n")
@@ -297,6 +298,18 @@ set_opt("CONFIG_DRM_VIRTIO_GPU", "y")
 set_opt("CONFIG_DRM_VIRTIO", "y")
 set_opt("CONFIG_DRM_VIRTIO_PCI", "y")
 set_opt("CONFIG_DRM_FBDEV_EMULATION", "y")
+set_opt("CONFIG_DRM_SIMPLEDRM", "y")
+set_opt("CONFIG_DRM_I915", "y")
+set_opt("CONFIG_DRM_AMDGPU", "y")
+set_opt("CONFIG_DRM_RADEON", "y")
+set_opt("CONFIG_DRM_NOUVEAU", "y")
+set_opt("CONFIG_PCI", "y")
+set_opt("CONFIG_PCI_MSI", "y")
+set_opt("CONFIG_SYSFB", "y")
+set_opt("CONFIG_SYSFB_SIMPLEFB", "y")
+set_opt("CONFIG_VT", "y")
+set_opt("CONFIG_VT_CONSOLE", "y")
+set_opt("CONFIG_HW_CONSOLE", "y")
 
 cfg.write_text(text)
 PY
